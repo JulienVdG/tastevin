@@ -17,6 +17,7 @@ import (
 
 	"github.com/digitalocean/go-qemu/qmp"
 	qmpraw "github.com/digitalocean/go-qemu/qmp/raw"
+	exp "github.com/google/goexpect"
 )
 
 const (
@@ -40,6 +41,7 @@ type VM struct {
 	cmdstarted bool
 	qmpmon     *qmp.SocketMonitor
 	qmprawmon  *qmpraw.Monitor
+	expect     *exp.GExpect
 }
 
 // NewVM creates a new qemu vm
@@ -122,6 +124,20 @@ func (vm *VM) cleanup() error {
 		if err != nil {
 			return fmt.Errorf("error stopping qemu: %v", err)
 		}
+	}
+	if vm.expect != nil {
+		// try closing properly
+		if vm.qmprawmon != nil {
+			err = vm.qmprawmon.Quit()
+			if err != nil {
+				return fmt.Errorf("error sending quit to qemu: %v", err)
+			}
+		}
+		err = vm.expect.Close()
+		if err != nil {
+			return fmt.Errorf("error closing expect: %v", err)
+		}
+
 	}
 
 	if vm.qmpmon != nil {

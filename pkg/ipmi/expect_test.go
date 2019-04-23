@@ -17,14 +17,13 @@ import (
 	exp "github.com/google/goexpect"
 )
 
+// Run with env TASTEVIN_IPMI='{"Hostname":"10.0.3.208","Username":"USERID","Password":"PASSW0RD","Interface":"lanplus","Path":"ipmitool"}'
 func TestLinuxboot2uroot(t *testing.T) {
-	r, err := ipmi.NewRemote(&ipmi.Connection{
-		Hostname:  "10.0.3.208",
-		Username:  "USERID",
-		Password:  "PASSW0RD",
-		Interface: "lanplus",
-		Path:      "ipmitool",
-	})
+	c, err := ipmi.ConfigFromEnv()
+	if err != nil {
+		t.Skipf("IPMI test is skipped unless TASTEVIN_IPMI is set (%v)", err)
+	}
+	r, err := ipmi.NewRemote(c)
 	if err != nil {
 		t.Fatal(err)
 	}

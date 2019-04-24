@@ -7,6 +7,7 @@ package ipmi
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -57,6 +58,10 @@ func (r *Remote) Spawn(timeout time.Duration, opts ...exp.Option) (*exp.GExpect,
 		return nil, nil, fmt.Errorf("error spawning impi sol: %v", err)
 	}
 	// TODO match first '[SOL Session operational.  Use ~? for help]'
+	out, _, err := e.Expect(regexp.MustCompile("\\[SOL Session operational.  Use .\\? for help\\]"), 20*time.Second)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error opening ipmi sol: %v (got %v)", err, out)
+	}
 
 	// TODO close should probably deactivate or TERM the process
 

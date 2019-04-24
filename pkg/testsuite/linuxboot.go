@@ -24,11 +24,11 @@ func Linuxboot2uroot(t *testing.T, e *exp.GExpect) error {
 	}{{
 		name:    "Match banner",
 		re:      regexp.MustCompile("Welcome to u-root!"),
-		timeout: 20 * time.Second,
+		timeout: 40 * time.Second, // TODO make this time a parameter
 	}, {
 		name:    "Match prompt",
 		re:      regexp.MustCompile("~/> "),
-		timeout: 1 * time.Second,
+		timeout: 5 * time.Second,
 	}}
 	for _, tst := range tests {
 		out, _, err := e.Expect(tst.re, tst.timeout)

@@ -16,8 +16,7 @@ var (
 
 // Em100 is a flash emulator instance
 type Em100 struct {
-	path string
-	chip string
+	args []string
 }
 
 // NewEm100 created a new Em100
@@ -28,13 +27,14 @@ func NewEm100(path, chip string) *Em100 {
 	if chip == "" {
 		chip = DefaultChip
 	}
-	return &Em100{path: path, chip: chip}
+	args := []string{path, "--set", chip}
+	return &Em100{args: args}
 }
 
 func (em *Em100) run(extraArgs ...string) error {
-	args := []string{"--stop", "--set", em.chip}
+	args := append(em.args, "--stop")
 	args = append(args, extraArgs...)
-	cmd := exec.Command(em.path, args...)
+	cmd := exec.Command(args[0], args[1:]...)
 	return cmd.Run()
 }
 

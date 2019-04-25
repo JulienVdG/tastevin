@@ -12,6 +12,10 @@ import (
 )
 
 func TestQemu(t *testing.T) {
+	if _, ok := os.LookupEnv("TASTEVIN_QEMU"); !ok {
+		t.Skip("QEMU test is skipped unless TASTEVIN_QEMU is set")
+	}
+
 	vm, err := NewVM("",
 		"-kernel", "/boot/vmlinuz-4.19.0-2-amd64",
 		"-initrd", "/tmp/initramfs.linux_amd64.cpio",

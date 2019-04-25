@@ -26,23 +26,29 @@ const (
 )
 
 // Relay represent a relay controlling a node power
-type Relay struct{}
+type Relay struct {
+	powerOnArgs  []string
+	powerOffArgs []string
+}
 
 // NewRelay creates a Relay
 func NewRelay() *Relay {
-	return &Relay{}
+	return &Relay{
+		powerOnArgs:  []string{powerOnCmd},
+		powerOffArgs: []string{powerOffCmd},
+	}
 }
 
 // TODO do we need Open/Close ?
 
 // PowerUp starts the node
 func (r *Relay) PowerUp() error {
-	cmd := exec.Command(powerOnCmd)
+	cmd := exec.Command(r.powerOnArgs[0], r.powerOnArgs[1:]...)
 	return cmd.Run()
 }
 
 // PowerDown stops the node
 func (r *Relay) PowerDown() error {
-	cmd := exec.Command(powerOffCmd)
+	cmd := exec.Command(r.powerOffArgs[0], r.powerOffArgs[1:]...)
 	return cmd.Run()
 }

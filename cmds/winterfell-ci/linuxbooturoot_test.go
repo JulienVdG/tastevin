@@ -21,8 +21,17 @@ import (
 )
 
 func TestLinuxboot2uroot(t *testing.T) {
+	em, err := em100.NewEm100FromEnv()
+	if err != nil {
+		t.Skipf("skipped unless TASTEVIN_EM100 is set (%v)", err)
+	}
+	r, err := relay.NewRelayFromEnv()
+	if err != nil {
+		t.Skipf("skipped unless TASTEVIN_RELAY is set (%v)", err)
+	}
+
 	logdir := filepath.Join("testdata", "log")
-	err := os.MkdirAll(logdir, 0775)
+	err = os.MkdirAll(logdir, 0775)
 	if err != nil {
 		t.Fatalf("TeeReplay failed: %v", err)
 	}
@@ -31,9 +40,6 @@ func TestLinuxboot2uroot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("TeeReplay failed: %v", err)
 	}
-
-	em := em100.NewEm100("", "")
-	r := relay.NewRelay()
 
 	// open serial
 	c := &serial.Config{Name: "/dev/ttyUSB0", Baud: 57600 /*, ReadTimeout: time.Nanosecond /*time.Second * 1.0 / 5760000*/}

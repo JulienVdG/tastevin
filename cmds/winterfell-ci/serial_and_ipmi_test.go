@@ -23,6 +23,15 @@ import (
 )
 
 func TestSerialAndIPMI(t *testing.T) {
+	em, err := em100.NewEm100FromEnv()
+	if err != nil {
+		t.Skipf("skipped unless TASTEVIN_EM100 is set (%v)", err)
+	}
+	r, err := relay.NewRelayFromEnv()
+	if err != nil {
+		t.Skipf("skipped unless TASTEVIN_RELAY is set (%v)", err)
+	}
+
 	ic, err := ipmi.ConfigFromEnv()
 	if err != nil {
 		t.Skipf("IPMI test is skipped unless TASTEVIN_IPMI is set (%v)", err)
@@ -47,9 +56,6 @@ func TestSerialAndIPMI(t *testing.T) {
 	if err != nil {
 		t.Fatalf("TeeReplay failed: %v", err)
 	}
-
-	em := em100.NewEm100("", "")
-	r := relay.NewRelay()
 
 	// open serial
 	sc := &serial.Config{Name: "/dev/ttyUSB0", Baud: 57600 /*, ReadTimeout: time.Nanosecond /*time.Second * 1.0 / 5760000*/}

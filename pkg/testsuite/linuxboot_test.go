@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/JulienVdG/tastevin/pkg/scriptreplay"
 	"github.com/JulienVdG/tastevin/pkg/testsuite"
 	exp "github.com/google/goexpect"
 )
@@ -37,26 +36,25 @@ func TestLinuxboot2uroot(t *testing.T) {
 		t.Fatalf("TeeReplay failed: %v", err)
 	}
 
-	sr, err := scriptreplay.NewFileWriter(filepath.Join(logdir, "FakeLinuxboot2uroot.log"), filepath.Join(logdir, "FakeLinuxboot2uroot.tim"))
-	if err != nil {
-		t.Fatalf("TeeReplay failed: %v", err)
+	opts, warn := testsuite.ExpectOptions("")
+	if warn != nil {
+		t.Log(warn)
 	}
-	// for timing reasons this will randomly fail...
-	// calling DebugCheck + Verbose can make it pass more often
-	// (Batcher does not introduce delays between commands)
-	// Also Tee does not seam to work for SpawnFake ...
-	e, _, err := exp.SpawnFake(srv, 1*time.Second, exp.PartialMatch(true), exp.Tee(sr), exp.DebugCheck(nil), exp.Verbose(true))
+	// Force it to be verbose
+	opts = append(opts, exp.DebugCheck(nil), exp.Verbose(true))
+
+	e, _, err := exp.SpawnFake(srv, 1*time.Second, opts...)
 	if err != nil {
 		t.Fatalf("SpawnFake failed: %v", err)
 	}
 
 	err = testsuite.Linuxboot2uroot(t, e)
 	if err != nil {
-		t.Fatalf("Linuxboot2uroot returned: %v", err)
+		t.Errorf("Linuxboot2uroot returned: %v", err)
 	}
 
 	err = e.Close()
 	if err != nil {
-		t.Fatalf("error closing SpawnFake: %v", err)
+		t.Errorf("error closing SpawnFake: %v", err)
 	}
 }

@@ -35,9 +35,15 @@ func main() {
 	doStop := *stopFlag || willStopEm
 	doStart := *startFlag || doLoad
 
-	// Create insterfaces
-	em := em100.NewEm100("", "")
-	r := relay.NewRelay()
+	// Create controlling objects
+	em, err := em100.NewEm100FromEnv()
+	if err != nil {
+		em = em100.NewEm100("", "")
+	}
+	r, err := relay.NewRelayFromEnv()
+	if err != nil {
+		r = relay.NewRelay()
+	}
 
 	// Process command in order
 	if doStop {

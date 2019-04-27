@@ -42,6 +42,7 @@ type VM struct {
 	qmpmon     *qmp.SocketMonitor
 	qmprawmon  *qmpraw.Monitor
 	expect     *exp.GExpect
+	expectCh   <-chan error
 }
 
 // NewVM creates a new qemu vm
@@ -138,6 +139,8 @@ func (vm *VM) cleanup() error {
 			return fmt.Errorf("error closing expect: %v", err)
 		}
 
+		// Ensure the logs are closed by waiting the complete end
+		<-vm.expectCh
 	}
 
 	if vm.qmpmon != nil {

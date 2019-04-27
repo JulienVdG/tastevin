@@ -34,6 +34,7 @@ func (vm *VM) Spawn(timeout time.Duration, opts ...exp.Option) (*exp.GExpect, <-
 		return nil, nil, fmt.Errorf("error spawning qemu: %v", err)
 	}
 	vm.expect = e
+	vm.expectCh = errchan
 
 	// qemu-system-x86_64: -qmp unix:/tmp/tastevin-qemu238249216/qmp-sock,server: info: QEMU waiting for connection on: disconnected:unix:/tmp/tastevin-qemu238249216/qmp-sock,server
 	out, _, err := e.Expect(regexp.MustCompile("-qmp .* info: QEMU waiting for connection on: disconnected:"), 1*time.Second)

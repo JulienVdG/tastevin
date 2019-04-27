@@ -7,13 +7,10 @@ package qemu
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/JulienVdG/tastevin/pkg/scriptreplay"
 	"github.com/JulienVdG/tastevin/pkg/testsuite"
-	exp "github.com/google/goexpect"
 )
 
 func TestLinuxboot2uroot(t *testing.T) {
@@ -29,17 +26,12 @@ func TestLinuxboot2uroot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	logdir := filepath.Join("testdata", "log")
-	err = os.MkdirAll(logdir, 0775)
-	if err != nil {
-		t.Fatalf("TeeReplay failed: %v", err)
+	opts, warn := testsuite.ExpectOptions("")
+	if warn != nil {
+		t.Log(warn)
 	}
 
-	sr, err := scriptreplay.NewFileWriter(filepath.Join(logdir, "QemuLinuxboot2uroot.log"), filepath.Join(logdir, "QemuLinuxboot2uroot.tim"))
-	if err != nil {
-		t.Fatalf("TeeReplay failed: %v", err)
-	}
-	e, _, err := vm.Spawn(1*time.Second, exp.PartialMatch(true), exp.Tee(sr) /* exp.DebugCheck(nil), exp.Verbose(true)*/)
+	e, _, err := vm.Spawn(1*time.Second, opts...)
 	if err != nil {
 		t.Fatalf("Spawn failed: %v", err)
 	}
@@ -50,7 +42,7 @@ func TestLinuxboot2uroot(t *testing.T) {
 
 	err = testsuite.Linuxboot2uroot(t, e)
 	if err != nil {
-		t.Fatalf("Linuxboot2uroot returned: %v", err)
+		t.Errorf("Linuxboot2uroot returned: %v", err)
 	}
 
 	err = vm.PowerDown()
@@ -61,10 +53,5 @@ func TestLinuxboot2uroot(t *testing.T) {
 	err = vm.Close()
 	if err != nil {
 		t.Error(err)
-	}
-
-	err = sr.Close()
-	if err != nil {
-		t.Errorf("sr close: %v", err)
 	}
 }

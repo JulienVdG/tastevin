@@ -6,17 +6,13 @@
 package main_test
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/JulienVdG/tastevin/pkg/em100"
 	"github.com/JulienVdG/tastevin/pkg/relay"
-	"github.com/JulienVdG/tastevin/pkg/scriptreplay"
 	"github.com/JulienVdG/tastevin/pkg/serial"
 	"github.com/JulienVdG/tastevin/pkg/testsuite"
-	exp "github.com/google/goexpect"
 )
 
 func TestLinuxboot2uroot(t *testing.T) {
@@ -29,15 +25,9 @@ func TestLinuxboot2uroot(t *testing.T) {
 		t.Skipf("skipped unless TASTEVIN_RELAY is set (%v)", err)
 	}
 
-	logdir := filepath.Join("testdata", "log")
-	err = os.MkdirAll(logdir, 0775)
-	if err != nil {
-		t.Fatalf("TeeReplay failed: %v", err)
-	}
-
-	sr, err := scriptreplay.NewFileWriter(filepath.Join(logdir, "Linuxboot2uroot.log"), filepath.Join(logdir, "Linuxboot2uroot.tim"))
-	if err != nil {
-		t.Fatalf("TeeReplay failed: %v", err)
+	opts, warn := testsuite.ExpectOptions("")
+	if warn != nil {
+		t.Log(warn)
 	}
 
 	// open serial
@@ -59,7 +49,7 @@ func TestLinuxboot2uroot(t *testing.T) {
 	}
 
 	// spawn serial
-	e, _, err := s.Spawn(1*time.Second, exp.PartialMatch(true), exp.Tee(sr) /* exp.DebugCheck(nil), exp.Verbose(true)*/)
+	e, _, err := s.Spawn(1*time.Second, opts...)
 	if err != nil {
 		t.Fatalf("Serial Spawn failed: %v", err)
 	}

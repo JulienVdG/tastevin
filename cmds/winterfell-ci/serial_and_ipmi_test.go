@@ -6,8 +6,6 @@
 package main_test
 
 import (
-	"os"
-	"path/filepath"
 	"regexp"
 	"testing"
 	"time"
@@ -15,10 +13,8 @@ import (
 	"github.com/JulienVdG/tastevin/pkg/em100"
 	"github.com/JulienVdG/tastevin/pkg/ipmi"
 	"github.com/JulienVdG/tastevin/pkg/relay"
-	"github.com/JulienVdG/tastevin/pkg/scriptreplay"
 	"github.com/JulienVdG/tastevin/pkg/serial"
 	"github.com/JulienVdG/tastevin/pkg/testsuite"
-	exp "github.com/google/goexpect"
 )
 
 func TestSerialAndIPMI(t *testing.T) {
@@ -40,20 +36,14 @@ func TestSerialAndIPMI(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	logdir := filepath.Join("testdata", "log")
-	err = os.MkdirAll(logdir, 0775)
-	if err != nil {
-		t.Fatalf("TeeReplay failed: %v", err)
+	opts_s, warn := testsuite.ExpectOptions("TestSerialAndIPMI_serial")
+	if warn != nil {
+		t.Log(warn)
 	}
 
-	sr_s, err := scriptreplay.NewFileWriter(filepath.Join(logdir, "TestSerialAndIPMI_serial.log"), filepath.Join(logdir, "TestSerialAndIPMI_serial.tim"))
-	if err != nil {
-		t.Fatalf("TeeReplay failed: %v", err)
-	}
-
-	sr_i, err := scriptreplay.NewFileWriter(filepath.Join(logdir, "TestSerialAndIPMI_ipmi.log"), filepath.Join(logdir, "TestSerialAndIPMI_ipmi.tim"))
-	if err != nil {
-		t.Fatalf("TeeReplay failed: %v", err)
+	opts_i, warn := testsuite.ExpectOptions("TestSerialAndIPMI_ipmi")
+	if warn != nil {
+		t.Log(warn)
 	}
 
 	// open serial
@@ -83,7 +73,7 @@ func TestSerialAndIPMI(t *testing.T) {
 	t.Run("group", func(t *testing.T) {
 		t.Run("Serial", func(t *testing.T) {
 			// spawn serial
-			e, _, err := s.Spawn(1*time.Second, exp.PartialMatch(true), exp.Tee(sr_s))
+			e, _, err := s.Spawn(1*time.Second, opts_s...)
 			if err != nil {
 				t.Fatalf("Serial Spawn failed: %v", err)
 			}
@@ -101,7 +91,7 @@ func TestSerialAndIPMI(t *testing.T) {
 		t.Run("IPMI", func(t *testing.T) {
 			t.Parallel()
 
-			e, _, err := i.Spawn(1*time.Second, exp.PartialMatch(true), exp.Tee(sr_i))
+			e, _, err := i.Spawn(1*time.Second, opts_i...)
 			if err != nil {
 				t.Fatalf("Spawn failed: %v", err)
 			}

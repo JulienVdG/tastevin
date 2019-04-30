@@ -6,7 +6,6 @@
 package main_test
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -45,7 +44,11 @@ func TestLinuxboot2uroot(t *testing.T) {
 	c := &serial.Config{Name: "/dev/ttyUSB0", Baud: 57600 /*, ReadTimeout: time.Nanosecond /*time.Second * 1.0 / 5760000*/}
 	s, err := serial.NewSerial(c)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
+	}
+	err = s.Open()
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	em.Load("linuxboot.rom")
@@ -77,10 +80,4 @@ func TestLinuxboot2uroot(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-
-	err = sr.Close()
-	if err != nil {
-		t.Errorf("sr close: %v", err)
-	}
-
 }

@@ -6,7 +6,6 @@
 package main_test
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -61,7 +60,11 @@ func TestSerialAndIPMI(t *testing.T) {
 	sc := &serial.Config{Name: "/dev/ttyUSB0", Baud: 57600 /*, ReadTimeout: time.Nanosecond /*time.Second * 1.0 / 5760000*/}
 	s, err := serial.NewSerial(sc)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
+	}
+	err = s.Open()
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	em.Load("linuxboot.rom")
@@ -94,11 +97,6 @@ func TestSerialAndIPMI(t *testing.T) {
 			if err != nil {
 				t.Errorf("Linuxboot2uroot returned: %v", err)
 			}
-
-			err = sr_s.Close()
-			if err != nil {
-				t.Errorf("sr close: %v", err)
-			}
 		})
 		t.Run("IPMI", func(t *testing.T) {
 			t.Parallel()
@@ -116,13 +114,7 @@ func TestSerialAndIPMI(t *testing.T) {
 			if err != nil {
 				t.Errorf("error closing expect: %v", err)
 			}
-
-			err = sr_i.Close()
-			if err != nil {
-				t.Errorf("sr close: %v", err)
-			}
 		})
-
 	}) // end of group
 
 	t.Run("ipmi power", func(t *testing.T) {

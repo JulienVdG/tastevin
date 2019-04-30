@@ -43,7 +43,7 @@ func TestLinuxboot2uroot(t *testing.T) {
 	// Force it to be verbose
 	opts = append(opts, exp.DebugCheck(nil), exp.Verbose(true))
 
-	e, _, err := exp.SpawnFake(srv, 1*time.Second, opts...)
+	e, ech, err := exp.SpawnFake(srv, 1*time.Second, opts...)
 	if err != nil {
 		t.Fatalf("SpawnFake failed: %v", err)
 	}
@@ -57,4 +57,7 @@ func TestLinuxboot2uroot(t *testing.T) {
 	if err != nil {
 		t.Errorf("error closing SpawnFake: %v", err)
 	}
+
+	// make sure the expect session is done and screenlog are closed
+	<-ech
 }

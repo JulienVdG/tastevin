@@ -66,12 +66,18 @@ func (s *Serial) Read(b []byte) (n int, err error) {
 	if s.p == nil {
 		return 0, fmt.Errorf("read %s port closed", s.c.Name)
 	}
-	n, err = s.p.Read(b)
-	// Handle read timeout, should not return EOF until closed
-	if n == 0 && err == io.EOF && s.p != nil {
-		err = nil
+	for {
+		n, err = s.p.Read(b)
+		// Handle read timeout, should not return EOF until closed
+		if n == 0 && err == io.EOF && s.p != nil {
+			// timeout=0 means blocking, so retry
+			if s.c.ReadTimeout == 0 {
+				continue
+			}
+			err = nil
+		}
+		return
 	}
-	return
 }
 
 func (s *Serial) Write(b []byte) (n int, err error) {

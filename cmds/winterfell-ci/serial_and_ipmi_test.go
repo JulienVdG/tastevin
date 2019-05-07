@@ -36,16 +36,6 @@ func TestSerialAndIPMI(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	opts_s, warn := testsuite.ExpectOptions("TestSerialAndIPMI_serial")
-	if warn != nil {
-		t.Log(warn)
-	}
-
-	opts_i, warn := testsuite.ExpectOptions("TestSerialAndIPMI_ipmi")
-	if warn != nil {
-		t.Log(warn)
-	}
-
 	// open serial
 	sc := &serial.Config{Name: "/dev/ttyUSB0", Baud: 57600 /*, ReadTimeout: time.Nanosecond /*time.Second * 1.0 / 5760000*/}
 	s, err := serial.NewSerial(sc)
@@ -72,6 +62,10 @@ func TestSerialAndIPMI(t *testing.T) {
 	// This Run will not return until the parallel tests finish.
 	t.Run("group", func(t *testing.T) {
 		t.Run("Serial", func(t *testing.T) {
+			opts_s, warn := testsuite.ExpectOptions("TestSerialAndIPMI_serial")
+			if warn != nil {
+				t.Log(warn)
+			}
 			// spawn serial
 			e, _, err := s.Spawn(1*time.Second, opts_s...)
 			if err != nil {
@@ -89,8 +83,14 @@ func TestSerialAndIPMI(t *testing.T) {
 			}
 		})
 		t.Run("IPMI", func(t *testing.T) {
+
+			opts_i, warn := testsuite.ExpectOptions("TestSerialAndIPMI_ipmi")
+			if warn != nil {
+				t.Log(warn)
+			}
 			t.Parallel()
 
+			// spawn ipmi
 			e, _, err := i.Spawn(1*time.Second, opts_i...)
 			if err != nil {
 				t.Fatalf("Spawn failed: %v", err)

@@ -6,7 +6,11 @@
 // Package em100 provides a Go API for controlling the em100 flash emulator
 package em100
 
-import "os/exec"
+import (
+	"log"
+	"os"
+	"os/exec"
+)
 
 // Default configuration values
 var (
@@ -50,6 +54,14 @@ func (em *Em100) Stop() error {
 
 // Load a flash image into the emulator, this will start the emulation
 func (em *Em100) Load(filename string) error {
+	// Check if file exists, but only log, command could run with sudo
+	// and have access to a file not visible to us.
+	info, err := os.Stat(filename)
+	if err != nil {
+		log.Println("cannot stat", filename, err)
+	} else if info.IsDir() {
+		log.Printf("error %s is a directory", filename)
+	}
 	return em.run("-d", filename, "--start")
 }
 

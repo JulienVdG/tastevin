@@ -41,7 +41,7 @@ func TestLinuxboot2uroot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	em.Load("linuxboot.rom")
+	em.Load(GetWinterfellImage())
 
 	err = r.PowerUp()
 	if err != nil {

@@ -10,10 +10,10 @@
 package asciicast
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -23,19 +23,30 @@ type ar struct {
 	logclose  string
 }
 
+type header struct {
+	Version   int   `json:"version"`
+	Width     int   `json:"width"`
+	Height    int   `json:"height"`
+	Timestamp int64 `json:"timestamp"`
+}
+
 // Now function provide time default to time.Now
 var Now = time.Now
 
 // NewWriter provide a WriteCloser that writes asciicast format to cast
-func NewWriter(cast io.WriteCloser) io.WriteCloser {
+func NewWriter(cast io.WriteCloser) (io.WriteCloser, error) {
 	t := Now()
 	ar := ar{cast: cast, starttime: t}
 
-	// TODO use json
-	msg := fmt.Sprintf("{\"version\": 2, \"width\": 80, \"height\": 24, \"timestamp\": %d}\n", t.Unix())
-	ar.cast.Write([]byte(msg))
+	h := header{Version: 2, Width: 80, Height: 24, Timestamp: t.Unix()}
+	msg, err := json.Marshal(&h)
+	if err != nil {
+		return nil, err
+	}
+	msg = append(msg, '\n')
+	ar.cast.Write(msg)
 
-	return &ar
+	return &ar, nil
 }
 
 // NewFileWriter provide a WriteCloser that writes asciicast format to file
@@ -44,7 +55,10 @@ func NewFileWriter(castName string) (io.WriteCloser, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error creating file '%s': %v", castName, err)
 	}
-	wc := NewWriter(f)
+	wc, err := NewWriter(f)
+	if err != nil {
+		return nil, err
+	}
 	ar := wc.(*ar)
 	fmt.Printf("*** Asciicast '%s' start\n", castName)
 	ar.logclose = fmt.Sprintf("*** Asciicast '%s' end", castName)
@@ -57,8 +71,16 @@ func NewFileWriter(castName string) (io.WriteCloser, error) {
 func (ar *ar) Write(p []byte) (n int, err error) {
 	t := Now()
 	to := t.Sub(ar.starttime)
-	str := strconv.QuoteToASCII(string(p))
-	msg := fmt.Sprintf("[%.06f, \"o\", %s]\n", to.Seconds(), str)
+	a := make([]interface{}, 3)
+	a[0] = to.Seconds()
+	a[1] = "o"
+	a[2] = string(p)
+	msg, err := json.Marshal(&a)
+	if err != nil {
+		return 0, err
+	}
+	msg = append(msg, '\n')
+
 	_, err = ar.cast.Write([]byte(msg))
 	return len(p), err
 }

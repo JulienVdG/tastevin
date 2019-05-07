@@ -44,6 +44,8 @@ func main() {
 		{"e", 0.5},
 		{"!", 0.5},
 		{"\r\n", 0.5},
+		{"\xff\x01\x02\x03\x04\x05\x06\a\b\t\n\v\f\r\x0e\x0f", 0.01},
+		{"\x1b[31;1mRED\x1b[01;34mBlue\x1b[00mNormal\n", 0.001},
 		{"Done.\r\n", 0.000001},
 	}
 	for _, test := range tests {

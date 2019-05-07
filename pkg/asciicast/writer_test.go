@@ -33,9 +33,10 @@ func TestWriter(t *testing.T) {
 	script.ExpectWriter.Name = "script writer"
 	script.ExpectCloser.Name = "script closer"
 
-	script.Content = []byte(fmt.Sprintf("{\"version\": 2, \"width\": 80, \"height\": 24, \"timestamp\": %d}\n", testtime.Unix()))
+	script.Content = []byte(fmt.Sprintf("{\"version\":2,\"width\":80,\"height\":24,\"timestamp\":%d}\n", testtime.Unix()))
 
-	sr := asciicast.NewWriter(&script)
+	sr, err := asciicast.NewWriter(&script)
+	Assert(t, err)
 
 	Assert(t, script.ExpectWriter.Result)
 	Assert(t, script.ExpectWriter.CalledOnce())
@@ -52,7 +53,10 @@ func TestWriter(t *testing.T) {
 	for _, test := range tests {
 		testtime = testtime.Add(time.Duration(test.delay * float64(time.Second)))
 		to := testtime.Sub(initialtime)
-		script.Content = []byte(fmt.Sprintf("[%.06f, \"o\", %s]\n", to.Seconds(), strconv.QuoteToASCII(test.content)))
+		// the QuoteToASCII is not JSON correct but OK for the above
+		// strings, the encoding is tested manually on the web frontend
+		// with asciinema-player
+		script.Content = []byte(fmt.Sprintf("[%g,\"o\",%s]\n", to.Seconds(), strconv.QuoteToASCII(test.content)))
 
 		sr.Write([]byte(test.content))
 

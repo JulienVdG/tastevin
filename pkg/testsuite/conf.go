@@ -12,12 +12,13 @@ import (
 	"os"
 )
 
-// TASTEVIN_CONF='{"ScriptReplayPrefix":"path/to/logprefix-","AsciicastPrefix":"path/to/logprefix-","ExpectDebugCheck":true,"ExpectVerbose":true}'
+// TASTEVIN_CONF='{"ScriptReplayPrefix":"path/to/logprefix-","AsciicastPrefix":"path/to/logprefix-","ExpectDebugCheck":true,"ExpectVerbose":true,"LongName":true}'
 type conf struct {
 	ScriptReplayPrefix string
 	AsciicastPrefix    string
 	ExpectDebugCheck   bool
 	ExpectVerbose      bool
+	LongName           bool
 	loaded             bool
 }
 

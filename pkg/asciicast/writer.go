@@ -20,6 +20,7 @@ import (
 type ar struct {
 	cast      io.WriteCloser
 	starttime time.Time
+	logclose  string
 }
 
 // Now function provide time default to time.Now
@@ -43,8 +44,12 @@ func NewFileWriter(castName string) (io.WriteCloser, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error creating file '%s': %v", castName, err)
 	}
+	wc := NewWriter(f)
+	ar := wc.(*ar)
+	fmt.Printf("*** Asciicast '%s' start\n", castName)
+	ar.logclose = fmt.Sprintf("*** Asciicast '%s' end", castName)
 
-	return NewWriter(f), nil
+	return wc, nil
 
 }
 
@@ -60,6 +65,9 @@ func (ar *ar) Write(p []byte) (n int, err error) {
 
 // Close implement io.Closer interface
 func (ar *ar) Close() error {
+	if ar.logclose != "" {
+		fmt.Println(ar.logclose)
+	}
 	err := ar.cast.Close()
 	if err != nil {
 		return fmt.Errorf("error closing cast %v", err)

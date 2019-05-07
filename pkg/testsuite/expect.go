@@ -60,7 +60,7 @@ func ExpectOptions(screenLogBaseName string) ([]exp.Option, error) {
 		o = append(o, exp.Verbose(true))
 	}
 	if len(screenLogBaseName) == 0 {
-		screenLogBaseName = callerName(2)
+		screenLogBaseName = callerName(2, c.LongName)
 	}
 	swc, err := openScriptReplay(c.ScriptReplayPrefix, screenLogBaseName)
 	if err != nil {

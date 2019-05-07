@@ -4,6 +4,9 @@
 // license that can be found in the LICENSE file.
 
 // Package asciicast handle logs compatible with the asciinema command
+//
+// asciicast file format (version 2) reference:
+// https://github.com/asciinema/asciinema/blob/master/doc/asciicast-v2.md
 package asciicast
 
 import (

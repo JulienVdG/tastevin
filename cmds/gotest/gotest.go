@@ -25,15 +25,28 @@ import (
 )
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "usage: gotest [go test -json]\n")
+	fmt.Fprintf(os.Stderr, "usage: gotest [-j file] [go test -json]\n")
 	os.Exit(2)
 }
+
+var (
+	flagJ = flag.String("j", "", "save JSON to `file`")
+)
 
 func main() {
 	flag.Usage = usage
 	flag.Parse()
 
 	c := json2test.NewConverter(json2test.NewVerboseHandler(os.Stdout))
+	if *flagJ != "" {
+		f, err := os.Create(*flagJ)
+		if err != nil {
+			fmt.Printf("Error creating file '%s': %v", *flagJ, err)
+			os.Exit(1)
+		}
+		defer f.Close()
+		c = io.MultiWriter(c, f)
+	}
 
 	if flag.NArg() == 0 {
 		io.Copy(c, os.Stdin)

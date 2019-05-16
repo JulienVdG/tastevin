@@ -15,34 +15,56 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"mime/multipart"
+	"net/http"
 	"os"
 	"os/exec"
+	"regexp"
+	"strings"
+	"time"
 
 	"github.com/JulienVdG/tastevin/pkg/json2test"
 )
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "usage: gotest [-j file] [go test -json]\n")
+	fmt.Fprintf(os.Stderr, "usage: gotest <options> [go test -json]\n")
+	fmt.Fprintf(os.Stderr, "with <options> in:\n")
+	flag.PrintDefaults()
 	os.Exit(2)
 }
 
 var (
 	flagJ = flag.String("j", "", "save JSON to `file`")
+	flagU = flag.String("u", "", "`URL` of the test server")
 )
 
 func main() {
 	flag.Usage = usage
 	flag.Parse()
 
-	c := json2test.NewConverter(json2test.NewVerboseHandler(os.Stdout))
+	var ac asciicastCatcher
+	var c io.Writer
+	var exitOnError bool
+	var buf bytes.Buffer
+
+	if *flagU != "" {
+		c = json2test.NewConverter(&ac, json2test.NewVerboseHandler(os.Stdout))
+		c = io.MultiWriter(c, &buf)
+	} else {
+		c = json2test.NewConverter(json2test.NewVerboseHandler(os.Stdout))
+	}
 	if *flagJ != "" {
 		f, err := os.Create(*flagJ)
 		if err != nil {
-			fmt.Printf("Error creating file '%s': %v", *flagJ, err)
-			os.Exit(1)
+			fmt.Printf("Error creating file '%s': %v\n", *flagJ, err)
+			os.Exit(3)
 		}
 		defer f.Close()
 		c = io.MultiWriter(c, f)
@@ -62,8 +84,26 @@ func main() {
 			} else {
 				fmt.Printf("test2json: %v\n", err)
 			}
-			os.Exit(1)
+			exitOnError = true
 		}
+	}
+
+	if *flagU != "" {
+		//fmt.Printf("buf: %v\n", buf.String())
+		//fmt.Printf("list: %v\n", ac.casts)
+		build, err := uploadTest(*flagU, &buf, ac.casts)
+		if err != nil {
+			fmt.Printf("Error uploading to '%s': %v\n", *flagU, err)
+		}
+		if build == nil {
+			os.Exit(4)
+		}
+		fmt.Printf("Test results uploaded to '%s'\n", *flagU)
+		fmt.Printf("You can see the results at '%s#build?id=%d'\n", *flagU, build.ID)
+	}
+
+	if exitOnError {
+		os.Exit(1)
 	}
 }
 
@@ -75,4 +115,113 @@ type countWriter struct {
 func (w *countWriter) Write(b []byte) (int, error) {
 	w.n += int64(len(b))
 	return w.w.Write(b)
+}
+
+type asciicastCatcher struct {
+	casts []string
+}
+
+func (c *asciicastCatcher) Handle(e json2test.TestEvent) {
+	if e.Action == "output" {
+		re := regexp.MustCompile("\\*\\*\\* Asciicast '(.*\\.cast)' start")
+		m := re.FindStringSubmatch(e.Output)
+		if m != nil {
+			c.casts = append(c.casts, m[1])
+		}
+
+	}
+}
+
+// Build is the response to test Post
+type Build struct {
+	ID     int64     `json:"id"`
+	Status string    `json:"status"`
+	Time   time.Time `json:"time"`
+}
+
+func uploadTest(url string, testBuf io.Reader, asciicasts []string) (*Build, error) {
+	apiURL := url + "api/builds"
+	client := &http.Client{}
+	//fmt.Printf("Posting to '%s'\n", apiURL)
+	resp, err := client.Post(apiURL, "text/plain", testBuf)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("bad status: %s", resp.Status)
+	}
+	bodyContent, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	var build Build
+	err = json.Unmarshal(bodyContent, &build)
+	if err != nil {
+		return nil, err
+	}
+
+	var msg []string
+	asciicastURL := fmt.Sprintf("%s/%d/asciicasts", apiURL, build.ID)
+	for _, a := range asciicasts {
+		err := uploadAttachment(client, asciicastURL, a)
+		if err != nil {
+			msg = append(msg, fmt.Sprintf("cannot upload '%s' (err: %v)", a, err))
+			continue
+		}
+	}
+
+	//fmt.Println(build)
+	if len(msg) > 0 {
+		return &build, errors.New(strings.Join(msg, "; "))
+	}
+	return &build, nil
+}
+
+func uploadAttachment(client *http.Client, url, filename string) error {
+	req, err := newfileUploadRequest(url, "file", filename)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status: %s", resp.Status)
+	}
+	return nil
+}
+
+// newfileUploadRequest creates a new file upload http request
+func newfileUploadRequest(uri string, paramName, path string) (*http.Request, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	fileContents, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+	fi, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	file.Close()
+
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile(paramName, fi.Name())
+	if err != nil {
+		return nil, err
+	}
+	part.Write(fileContents)
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	request, err := http.NewRequest("POST", uri, body)
+	request.Header.Add("Content-Type", writer.FormDataContentType())
+	return request, err
 }

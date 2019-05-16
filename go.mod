@@ -8,7 +8,7 @@ require (
 	github.com/stretchr/testify v1.3.0
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	github.com/vmware/goipmi v0.0.0-20181114221114-2333cd82d702
-	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734 // indirect
-	golang.org/x/sys v0.0.0-20190429190828-d89cdac9e872 // indirect
+	golang.org/x/crypto v0.0.0-20190513172903-22d7a77e9e5f // indirect
+	golang.org/x/sys v0.0.0-20190516110030-61b9204099cb // indirect
 	google.golang.org/grpc v1.20.1 // indirect
 )

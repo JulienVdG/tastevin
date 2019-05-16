@@ -21,3 +21,6 @@
 /Godeps/
 
 # End of https://www.gitignore.io/api/go
+
+# test log stored in testdata are not test binaries
+!**/testdata/*.test

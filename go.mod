@@ -3,7 +3,7 @@ module github.com/JulienVdG/tastevin
 require (
 	github.com/digitalocean/go-libvirt v0.0.0-20190419173705-5ea6f2a136d8 // indirect
 	github.com/digitalocean/go-qemu v0.0.0-20181112162955-dd7bb9c771b8
-	github.com/google/goexpect v0.0.0-20190425035906-112704a48083
+	github.com/google/goexpect v0.0.0-20190516060327-b674c1c17d90
 	github.com/google/goterm v0.0.0-20190311235235-ce302be1d114 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07

@@ -15,6 +15,8 @@ github.com/golang/protobuf v1.2.0 h1:P3YflyNX/ehuJFLhxviNdFxQPkGK5cDcApsge1SqnvM
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/google/goexpect v0.0.0-20190425035906-112704a48083 h1:3HihP5rfhHoq48iXpwvPVPyUJE1jQWOhiTdQ+lGbozw=
 github.com/google/goexpect v0.0.0-20190425035906-112704a48083/go.mod h1:qtE5aAEkt0vOSA84DBh8aJsz6riL8ONfqfULY7lBjqc=
+github.com/google/goexpect v0.0.0-20190516060327-b674c1c17d90 h1:mWUdkNyXwck+tI34CGYTkDJQ8fKVzl/rTc4AlbPu63g=
+github.com/google/goexpect v0.0.0-20190516060327-b674c1c17d90/go.mod h1:qtE5aAEkt0vOSA84DBh8aJsz6riL8ONfqfULY7lBjqc=
 github.com/google/goterm v0.0.0-20190311235235-ce302be1d114 h1:Uy/xnk45iZMzPi2uZlOi3RxUGMxrn9afM9WhCAfYEyc=
 github.com/google/goterm v0.0.0-20190311235235-ce302be1d114/go.mod h1:nOFQdrUlIlx6M6ODdSpBj1NVA+VgLC6kmw60mkw34H4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

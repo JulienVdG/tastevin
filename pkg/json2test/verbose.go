@@ -7,7 +7,6 @@ package json2test
 
 import (
 	"io"
-	"log"
 )
 
 type verboseHandler struct {
@@ -23,7 +22,7 @@ func (v verboseHandler) Handle(e TestEvent) {
 	if e.Action == "output" {
 		_, err := v.w.Write([]byte(e.Output))
 		if err != nil {
-			log.Printf("json2test verbose output: %s", err)
+			LogWarn("json2test verbose output: %s", err)
 		}
 	}
 }

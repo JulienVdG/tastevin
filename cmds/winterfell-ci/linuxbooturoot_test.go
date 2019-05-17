@@ -6,6 +6,8 @@
 package main_test
 
 import (
+	"fmt"
+	"regexp"
 	"testing"
 	"time"
 
@@ -43,6 +45,34 @@ func TestLinuxboot2uroot(t *testing.T) {
 		t.Fatalf("Linuxboot2uroot returned: %v", err)
 	}
 
+	t.Run("Reboot", func(t *testing.T) {
+		err := e.Send("cat >proc/sysrq-trigger\r\n")
+		if err != nil {
+			t.Fatalf("Open sysrq: %v", err)
+		}
+		out, _, err := e.Expect(regexp.MustCompile("sysrq-trigger"), 1*time.Second)
+		if err != nil {
+			t.Errorf("error waiting for sysrq open: %v (got %v)", err, out)
+		}
 
+		err = e.Send("b\r\n")
+		if err != nil {
+			t.Fatalf("Rebooting: %v", err)
+		}
+		out, _, err = e.Expect(regexp.MustCompile("sysrq: SysRq : Resetting"), 1*time.Second)
+		if err != nil {
+			t.Errorf("error waiting for sysrq reset: %v (got %v)", err, out)
+		}
+		fmt.Printf("Reboot done\n")
 
+		out, _, err = e.Expect(regexp.MustCompile("LinuxBoot: Starting bzImage"), 30*time.Second)
+		if err != nil {
+			t.Errorf("error waiting for linuxboot loader: %v (got %v)", err, out)
+		}
+
+		err = testsuite.Linuxboot2uroot(t, e)
+		if err != nil {
+			t.Fatalf("Linuxboot2uroot returned: %v", err)
+		}
+	})
 }

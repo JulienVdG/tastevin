@@ -6,6 +6,7 @@
 package testsuite
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 	"time"
@@ -37,6 +38,12 @@ func Linuxboot2uroot(t *testing.T, e *exp.GExpect) error {
 			continue
 		}
 		//t.Log(out)
+		// Don't use t.Log here, we want the event to be synchronous
+		// to be useful as seek points for asciinema in gotest-web
+		// however go test loose the test origin (as -json is a filter
+		// not the internal, it has no way to scope the output in the
+		// right test.)
+		fmt.Printf("%s done\n", tst.name)
 	}
 
 	return nil

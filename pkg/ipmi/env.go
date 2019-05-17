@@ -8,6 +8,7 @@ package ipmi
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 )
 
@@ -22,7 +23,7 @@ func ConfigFromEnv() (*Connection, error) {
 	var c Connection
 	err := json.Unmarshal([]byte(env), &c)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("TASTEVIN_IPMI invalid %v", err)
 	}
 	if c.Interface == "" {
 		c.Interface = "lanplus"

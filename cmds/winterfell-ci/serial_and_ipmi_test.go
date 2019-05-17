@@ -10,53 +10,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/JulienVdG/tastevin/pkg/em100"
-	"github.com/JulienVdG/tastevin/pkg/ipmi"
-	"github.com/JulienVdG/tastevin/pkg/relay"
-	"github.com/JulienVdG/tastevin/pkg/serial"
 	"github.com/JulienVdG/tastevin/pkg/testsuite"
 )
 
 func TestSerialAndIPMI(t *testing.T) {
-	em, err := em100.NewEm100FromEnv()
+	ci, err := NewWinterfellCi(true)
+	defer CloseWinterfellCiTest(t, ci)
 	if err != nil {
-		t.Skipf("skipped unless TASTEVIN_EM100 is set (%v)", err)
-	}
-	r, err := relay.NewRelayFromEnv()
-	if err != nil {
-		t.Skipf("skipped unless TASTEVIN_RELAY is set (%v)", err)
-	}
-
-	ic, err := ipmi.ConfigFromEnv()
-	if err != nil {
-		t.Skipf("IPMI test is skipped unless TASTEVIN_IPMI is set (%v)", err)
-	}
-	i, err := ipmi.NewRemote(ic)
-	if err != nil {
+		if _, ok := err.(SkipError); ok {
+			t.Skipf("skipped (%v)", err)
+		}
 		t.Fatal(err)
 	}
 
-	// open serial
-	sc := &serial.Config{Name: "/dev/ttyUSB0", Baud: 57600 /*, ReadTimeout: time.Nanosecond /*time.Second * 1.0 / 5760000*/}
-	s, err := serial.NewSerial(sc)
+	err = ci.Open()
 	if err != nil {
 		t.Fatal(err)
-	}
-	err = s.Open()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	em.Load(GetWinterfellImage())
-
-	err = r.PowerUp()
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = i.Open()
-	if err != nil {
-		t.Error(err)
 	}
 
 	// This Run will not return until the parallel tests finish.
@@ -67,7 +36,7 @@ func TestSerialAndIPMI(t *testing.T) {
 				t.Log(warn)
 			}
 			// spawn serial
-			e, _, err := s.Spawn(1*time.Second, opts_s...)
+			e, _, err := ci.Serial.Spawn(1*time.Second, opts_s...)
 			if err != nil {
 				t.Fatalf("Serial Spawn failed: %v", err)
 			}
@@ -91,7 +60,7 @@ func TestSerialAndIPMI(t *testing.T) {
 			t.Parallel()
 
 			// spawn ipmi
-			e, _, err := i.Spawn(1*time.Second, opts_i...)
+			e, _, err := ci.Ipmi.Spawn(1*time.Second, opts_i...)
 			if err != nil {
 				t.Fatalf("Spawn failed: %v", err)
 			}
@@ -110,19 +79,19 @@ func TestSerialAndIPMI(t *testing.T) {
 	t.Run("ipmi power", func(t *testing.T) {
 
 		// Test IMPI Power interface
-		on, err := i.PowerStatus()
+		on, err := ci.Ipmi.PowerStatus()
 		if err != nil {
 			t.Error(err)
 		}
 		if !on {
 			t.Error("Expected Power status On, got Off")
 		}
-		err = i.PowerDown()
+		err = ci.Ipmi.PowerDown()
 		if err != nil {
 			t.Error(err)
 		}
 		time.Sleep(1 * time.Second)
-		on, err = i.PowerStatus()
+		on, err = ci.Ipmi.PowerStatus()
 		if err != nil {
 			t.Error(err)
 		}
@@ -130,21 +99,4 @@ func TestSerialAndIPMI(t *testing.T) {
 			t.Error("Expected Power status Off, got On")
 		}
 	}) // end of ipmi power
-
-	err = i.Close()
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = r.PowerDown()
-	if err != nil {
-		t.Error(err)
-	}
-
-	em.Stop()
-
-	err = s.Close()
-	if err != nil {
-		t.Error(err)
-	}
 }

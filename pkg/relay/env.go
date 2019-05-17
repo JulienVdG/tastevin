@@ -8,6 +8,7 @@ package relay
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 )
 
@@ -27,7 +28,13 @@ func NewRelayFromEnv() (*Relay, error) {
 	var c relayConf
 	err := json.Unmarshal([]byte(env), &c)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("TASTEVIN_RELAY invalid %v", err)
+	}
+	if len(c.PowerOnCmd) == 0 {
+		return nil, fmt.Errorf("TASTEVIN_RELAY missing PowerOnCmd")
+	}
+	if len(c.PowerOffCmd) == 0 {
+		return nil, fmt.Errorf("TASTEVIN_RELAY missing PowerOffCmd")
 	}
 	r := Relay{
 		powerOnArgs:  c.PowerOnCmd,

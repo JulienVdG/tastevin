@@ -9,20 +9,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/JulienVdG/tastevin/pkg/em100"
-	"github.com/JulienVdG/tastevin/pkg/relay"
-	"github.com/JulienVdG/tastevin/pkg/serial"
 	"github.com/JulienVdG/tastevin/pkg/testsuite"
 )
 
 func TestLinuxboot2uroot(t *testing.T) {
-	em, err := em100.NewEm100FromEnv()
+	ci, err := NewWinterfellCi(false)
+	defer CloseWinterfellCiTest(t, ci)
 	if err != nil {
-		t.Skipf("skipped unless TASTEVIN_EM100 is set (%v)", err)
+		if _, ok := err.(SkipError); ok {
+			t.Skipf("skipped (%v)", err)
+		}
+		t.Fatal(err)
 	}
-	r, err := relay.NewRelayFromEnv()
+
+	err = ci.Open()
 	if err != nil {
-		t.Skipf("skipped unless TASTEVIN_RELAY is set (%v)", err)
+		t.Fatal(err)
 	}
 
 	opts, warn := testsuite.ExpectOptions("")
@@ -30,26 +32,8 @@ func TestLinuxboot2uroot(t *testing.T) {
 		t.Log(warn)
 	}
 
-	// open serial
-	c := &serial.Config{Name: "/dev/ttyUSB0", Baud: 57600 /*, ReadTimeout: time.Nanosecond /*time.Second * 1.0 / 5760000*/}
-	s, err := serial.NewSerial(c)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = s.Open()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	em.Load(GetWinterfellImage())
-
-	err = r.PowerUp()
-	if err != nil {
-		t.Error(err)
-	}
-
 	// spawn serial
-	e, _, err := s.Spawn(1*time.Second, opts...)
+	e, _, err := ci.Serial.Spawn(1*time.Second, opts...)
 	if err != nil {
 		t.Fatalf("Serial Spawn failed: %v", err)
 	}
@@ -59,15 +43,6 @@ func TestLinuxboot2uroot(t *testing.T) {
 		t.Fatalf("Linuxboot2uroot returned: %v", err)
 	}
 
-	err = r.PowerDown()
-	if err != nil {
-		t.Error(err)
-	}
 
-	em.Stop()
 
-	err = s.Close()
-	if err != nil {
-		t.Error(err)
-	}
 }

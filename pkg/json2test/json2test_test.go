@@ -47,6 +47,13 @@ func logCounter(string, ...interface{}) {
 	logCount.CallCount++
 }
 
+var printCount iotest.CallCounter
+
+func printCounter(string, ...interface{}) (int, error) {
+	printCount.CallCount++
+	return 0, nil
+}
+
 func TestConverter(t *testing.T) {
 	json2test.LogWarn = logCounter
 	c := &testCase{}
@@ -61,13 +68,26 @@ func TestConverter(t *testing.T) {
 		Assert(t, logCount.NotCalled())
 	})
 	t.Run("InvalidJSON", func(t *testing.T) {
-		i, err := w.Write([]byte("}"))
+		i, err := w.Write([]byte("{}}"))
+		Assert(t, err)
+		if i != 3 {
+			t.Errorf("expected 3 got %v", i)
+		}
+		Assert(t, logCount.CalledOnce())
+		Assert(t, c.NotCalled())
+	})
+	t.Run("Raw Text", func(t *testing.T) {
+		origPrintf := json2test.OutPrintf
+		json2test.OutPrintf = printCounter
+		i, err := w.Write([]byte("#"))
 		Assert(t, err)
 		if i != 1 {
 			t.Errorf("expected 1 got %v", i)
 		}
-		Assert(t, logCount.CalledOnce())
+		Assert(t, printCount.CalledOnce())
+		Assert(t, logCount.NotCalled())
 		Assert(t, c.NotCalled())
+		json2test.OutPrintf = origPrintf
 	})
 	time0 := time.Unix(0, 0)
 	elapsed0 := float64(0.0)

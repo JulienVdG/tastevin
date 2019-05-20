@@ -45,7 +45,37 @@ func TestLinuxboot2uroot(t *testing.T) {
 		t.Fatalf("Linuxboot2uroot returned: %v", err)
 	}
 	if t.Failed() {
-		t.FailNow()
+		fmt.Printf("Initial boot fail, try cold reboot without reloading the flash...\n")
+		success := t.Run("ColdReboot", func(t *testing.T) {
+			err := ci.Relay.PowerDown()
+			if err != nil {
+				t.Fatalf("cannot power down: %v", err)
+			}
+			err = ci.Relay.PowerUp()
+			if err != nil {
+				t.Fatalf("cannot power up: %v", err)
+			}
+			fmt.Printf("Cold Reboot done\n")
+
+			out, _, err := e.Expect(regexp.MustCompile("LinuxBoot: Starting bzImage"), 30*time.Second)
+			if err != nil {
+				t.Fatalf("error waiting for linuxboot loader: %v (got %v)", err, out)
+			}
+			fmt.Printf("Seen linuxboot loader\n")
+
+			err = testsuite.Linuxboot2uroot(t, e)
+			if err != nil {
+				t.Fatalf("Linuxboot2uroot returned: %v", err)
+			}
+		})
+
+		if success {
+			// printed in subtest: https://github.com/golang/go/issues/29755
+			// + https://github.com/golang/go/issues/24929
+			t.Log("Initial boot fail, cold reboot without reloading the flash succeeded. Something is wrong with the initial state of the flash!\n")
+		} else {
+			t.FailNow()
+		}
 	}
 
 	t.Run("Reboot", func(t *testing.T) {

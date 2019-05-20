@@ -44,6 +44,9 @@ func TestLinuxboot2uroot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Linuxboot2uroot returned: %v", err)
 	}
+	if t.Failed() {
+		t.FailNow()
+	}
 
 	t.Run("Reboot", func(t *testing.T) {
 		err := e.Send("cat >proc/sysrq-trigger\r\n")
@@ -52,7 +55,7 @@ func TestLinuxboot2uroot(t *testing.T) {
 		}
 		out, _, err := e.Expect(regexp.MustCompile("sysrq-trigger"), 1*time.Second)
 		if err != nil {
-			t.Errorf("error waiting for sysrq open: %v (got %v)", err, out)
+			t.Fatalf("error waiting for sysrq open: %v (got %v)", err, out)
 		}
 
 		err = e.Send("b\r\n")
@@ -61,13 +64,13 @@ func TestLinuxboot2uroot(t *testing.T) {
 		}
 		out, _, err = e.Expect(regexp.MustCompile("sysrq: SysRq : Resetting"), 1*time.Second)
 		if err != nil {
-			t.Errorf("error waiting for sysrq reset: %v (got %v)", err, out)
+			t.Fatalf("error waiting for sysrq reset: %v (got %v)", err, out)
 		}
 		fmt.Printf("Reboot done\n")
 
 		out, _, err = e.Expect(regexp.MustCompile("LinuxBoot: Starting bzImage"), 30*time.Second)
 		if err != nil {
-			t.Errorf("error waiting for linuxboot loader: %v (got %v)", err, out)
+			t.Fatalf("error waiting for linuxboot loader: %v (got %v)", err, out)
 		}
 
 		err = testsuite.Linuxboot2uroot(t, e)

@@ -92,7 +92,7 @@ func TestLinuxboot2uroot(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Rebooting: %v", err)
 		}
-		out, _, err = e.Expect(regexp.MustCompile("sysrq: SysRq : Resetting"), 1*time.Second)
+		out, _, err = e.Expect(regexp.MustCompile("sysrq:( SysRq :)? Resetting"), 1*time.Second)
 		if err != nil {
 			t.Fatalf("error waiting for sysrq reset: %v (got %v)", err, out)
 		}

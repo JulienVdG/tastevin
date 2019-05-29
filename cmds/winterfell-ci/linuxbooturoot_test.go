@@ -7,11 +7,11 @@ package main_test
 
 import (
 	"fmt"
-	"regexp"
 	"testing"
 	"time"
 
 	"github.com/JulienVdG/tastevin/pkg/testsuite"
+	exp "github.com/google/goexpect"
 )
 
 func TestLinuxboot2uroot(t *testing.T) {
@@ -40,7 +40,8 @@ func TestLinuxboot2uroot(t *testing.T) {
 		t.Fatalf("Serial Spawn failed: %v", err)
 	}
 
-	batcher := testsuite.Linuxboot2urootBatcher
+	batcher := testsuite.LinuxbootEfiLoaderBatcher
+	batcher = append(batcher, testsuite.Linuxboot2urootBatcher...)
 	res, err := e.ExpectBatch(batcher, 0)
 	if err != nil {
 		t.Fatalf("Linuxboot2uroot: %v", testsuite.DescribeBatcherErr(batcher, res, err))
@@ -58,12 +59,6 @@ func TestLinuxboot2uroot(t *testing.T) {
 			}
 			fmt.Printf("Cold Reboot done\n")
 
-			out, _, err := e.Expect(regexp.MustCompile("LinuxBoot: Starting bzImage"), 30*time.Second)
-			if err != nil {
-				t.Fatalf("error waiting for linuxboot loader: %v (got %v)", err, out)
-			}
-			fmt.Printf("Seen linuxboot loader\n")
-
 			res, err := e.ExpectBatch(batcher, 0)
 			if err != nil {
 				t.Fatalf("Linuxboot2uroot: %v", testsuite.DescribeBatcherErr(batcher, res, err))
@@ -80,31 +75,22 @@ func TestLinuxboot2uroot(t *testing.T) {
 	}
 
 	t.Run("Reboot", func(t *testing.T) {
-		err := e.Send("cat >proc/sysrq-trigger\r\n")
+		rebootBatcher := []exp.Batcher{
+			&exp.BSnd{S: "cat >proc/sysrq-trigger\r\n"},
+			&exp.BExpT{R: "sysrq-trigger", T: 1},
+			&exp.BSnd{S: "b\r\n"},
+			&testsuite.BExpTLog{
+				L: "Reboot done",
+				R: "sysrq:( SysRq :)? Resetting",
+				T: 1,
+			}}
+
+		res, err := e.ExpectBatch(rebootBatcher, 0)
 		if err != nil {
-			t.Fatalf("Open sysrq: %v", err)
-		}
-		out, _, err := e.Expect(regexp.MustCompile("sysrq-trigger"), 1*time.Second)
-		if err != nil {
-			t.Fatalf("error waiting for sysrq open: %v (got %v)", err, out)
+			t.Fatalf("Reboot: %v", testsuite.DescribeBatcherErr(rebootBatcher, res, err))
 		}
 
-		err = e.Send("b\r\n")
-		if err != nil {
-			t.Fatalf("Rebooting: %v", err)
-		}
-		out, _, err = e.Expect(regexp.MustCompile("sysrq:( SysRq :)? Resetting"), 1*time.Second)
-		if err != nil {
-			t.Fatalf("error waiting for sysrq reset: %v (got %v)", err, out)
-		}
-		fmt.Printf("Reboot done\n")
-
-		out, _, err = e.Expect(regexp.MustCompile("LinuxBoot: Starting bzImage"), 30*time.Second)
-		if err != nil {
-			t.Fatalf("error waiting for linuxboot loader: %v (got %v)", err, out)
-		}
-
-		res, err := e.ExpectBatch(batcher, 0)
+		res, err = e.ExpectBatch(batcher, 0)
 		if err != nil {
 			t.Fatalf("Linuxboot2uroot: %v", testsuite.DescribeBatcherErr(batcher, res, err))
 		}

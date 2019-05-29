@@ -17,7 +17,7 @@ import (
 
 func TestLinuxboot2uroot(t *testing.T) {
 	srv := []exp.Batcher{
-		&exp.BSnd{`
+		&exp.BSnd{S: `
 2019/03/26 13:50:05 Welcome to u-root!
                               _
    _   _      _ __ ___   ___ | |_
@@ -26,7 +26,7 @@ func TestLinuxboot2uroot(t *testing.T) {
    \__,_|    |_|  \___/ \___/ \__|
 
 `},
-		&exp.BSnd{`
+		&exp.BSnd{S: `
 ~/> `},
 	}
 

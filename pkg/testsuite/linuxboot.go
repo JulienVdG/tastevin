@@ -28,8 +28,7 @@ func Linuxboot2uroot(t *testing.T, e *exp.GExpect) error {
 	batcher := Linuxboot2urootBatcher
 	res, err := e.ExpectBatch(batcher, 0)
 	if err != nil {
-		t.Errorf("Linuxboot2uroot: e.ExpectBatch(%v,_), err: %v, res: %q", batcher, err, res)
-
+		t.Errorf("Linuxboot2uroot: %v", DescribeBatcherErr(batcher, res, err))
 	}
 	return nil
 }

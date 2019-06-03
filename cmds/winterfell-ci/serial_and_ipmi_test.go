@@ -28,6 +28,7 @@ func TestSerialAndIPMI(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	batcher := testsuite.Linuxboot2urootBatcher
 	// This Run will not return until the parallel tests finish.
 	t.Run("group", func(t *testing.T) {
 		t.Run("Serial", func(t *testing.T) {
@@ -46,9 +47,9 @@ func TestSerialAndIPMI(t *testing.T) {
 			}
 
 			t.Parallel()
-			err = testsuite.Linuxboot2uroot(t, e)
+			res, err := e.ExpectBatch(batcher, 0)
 			if err != nil {
-				t.Errorf("Linuxboot2uroot returned: %v", err)
+				t.Errorf("Linuxboot2uroot: %v", testsuite.DescribeBatcherErr(batcher, res, err))
 			}
 		})
 		t.Run("IPMI", func(t *testing.T) {
@@ -64,9 +65,9 @@ func TestSerialAndIPMI(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Spawn failed: %v", err)
 			}
-			err = testsuite.Linuxboot2uroot(t, e)
+			res, err := e.ExpectBatch(batcher, 0)
 			if err != nil {
-				t.Errorf("Linuxboot2uroot returned: %v", err)
+				t.Errorf("Linuxboot2uroot: %v", testsuite.DescribeBatcherErr(batcher, res, err))
 			}
 
 			err = e.Close()

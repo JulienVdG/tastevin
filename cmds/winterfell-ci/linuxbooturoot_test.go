@@ -40,9 +40,10 @@ func TestLinuxboot2uroot(t *testing.T) {
 		t.Fatalf("Serial Spawn failed: %v", err)
 	}
 
-	err = testsuite.Linuxboot2uroot(t, e)
+	batcher := testsuite.Linuxboot2urootBatcher
+	res, err := e.ExpectBatch(batcher, 0)
 	if err != nil {
-		t.Fatalf("Linuxboot2uroot returned: %v", err)
+		t.Fatalf("Linuxboot2uroot: %v", testsuite.DescribeBatcherErr(batcher, res, err))
 	}
 	if t.Failed() {
 		fmt.Printf("Initial boot fail, try cold reboot without reloading the flash...\n")
@@ -63,9 +64,9 @@ func TestLinuxboot2uroot(t *testing.T) {
 			}
 			fmt.Printf("Seen linuxboot loader\n")
 
-			err = testsuite.Linuxboot2uroot(t, e)
+			res, err := e.ExpectBatch(batcher, 0)
 			if err != nil {
-				t.Fatalf("Linuxboot2uroot returned: %v", err)
+				t.Fatalf("Linuxboot2uroot: %v", testsuite.DescribeBatcherErr(batcher, res, err))
 			}
 		})
 
@@ -103,9 +104,9 @@ func TestLinuxboot2uroot(t *testing.T) {
 			t.Fatalf("error waiting for linuxboot loader: %v (got %v)", err, out)
 		}
 
-		err = testsuite.Linuxboot2uroot(t, e)
+		res, err := e.ExpectBatch(batcher, 0)
 		if err != nil {
-			t.Fatalf("Linuxboot2uroot returned: %v", err)
+			t.Fatalf("Linuxboot2uroot: %v", testsuite.DescribeBatcherErr(batcher, res, err))
 		}
 	})
 }

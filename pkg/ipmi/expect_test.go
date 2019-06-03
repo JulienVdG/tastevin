@@ -47,9 +47,11 @@ func TestLinuxboot2uroot(t *testing.T) {
 		t.Fatalf("Spawn failed: %v", err)
 	}
 
-	err = testsuite.Linuxboot2uroot(t, e)
+	batcher := testsuite.Linuxboot2urootBatcher
+	res, err := e.ExpectBatch(batcher, 0)
 	if err != nil {
-		t.Fatalf("Linuxboot2uroot returned: %v", err)
+		t.Errorf("Linuxboot2uroot: %v", testsuite.DescribeBatcherErr(batcher, res, err))
+
 	}
 
 	err = r.PowerDown()

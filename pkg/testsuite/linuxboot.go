@@ -6,8 +6,6 @@
 package testsuite
 
 import (
-	"testing"
-
 	exp "github.com/google/goexpect"
 )
 
@@ -22,13 +20,3 @@ var Linuxboot2urootBatcher []exp.Batcher = []exp.Batcher{
 		R: "~/> ",
 		T: 5,
 	}}
-
-// Linuxboot2uroot test the boot sequence of u-root to the shell prompt
-func Linuxboot2uroot(t *testing.T, e *exp.GExpect) error {
-	batcher := Linuxboot2urootBatcher
-	res, err := e.ExpectBatch(batcher, 0)
-	if err != nil {
-		t.Errorf("Linuxboot2uroot: %v", DescribeBatcherErr(batcher, res, err))
-	}
-	return nil
-}

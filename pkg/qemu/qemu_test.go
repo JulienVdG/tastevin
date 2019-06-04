@@ -6,6 +6,7 @@
 package qemu
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -17,7 +18,7 @@ func TestQemu(t *testing.T) {
 	}
 
 	vm, err := NewVM("",
-		"-kernel", "/boot/vmlinuz-4.19.0-2-amd64",
+		"-kernel", "/boot/vmlinuz-4.19.0-5-amd64",
 		"-initrd", "/tmp/initramfs.linux_amd64.cpio",
 		"-append", "console=ttyS0")
 	if err != nil {
@@ -55,7 +56,7 @@ func TestQemu(t *testing.T) {
 		t.Errorf("Expected on: PowerStatus()=%v, want %v", on, true)
 	}
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(10 * time.Second)
 
 	err = vm.PowerDown()
 	if err != nil {
@@ -75,4 +76,6 @@ func TestQemu(t *testing.T) {
 		t.Error(err)
 	}
 
+	// We mess with stdout, add a newline
+	fmt.Println("")
 }

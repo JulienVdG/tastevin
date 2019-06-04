@@ -19,7 +19,7 @@ func TestLinuxboot2uroot(t *testing.T) {
 	}
 
 	vm, err := NewVM("",
-		"-kernel", "/boot/vmlinuz-4.19.0-2-amd64",
+		"-kernel", "/boot/vmlinuz-4.19.0-5-amd64",
 		"-initrd", "/tmp/initramfs.linux_amd64.cpio",
 		"-append", "console=ttyS0")
 	if err != nil {

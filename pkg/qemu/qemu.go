@@ -28,7 +28,7 @@ const (
 var (
 	DefaultPath = "qemu-system-x86_64"
 	DefaultArgs = []string{"-m", "1024",
-		"-enable-kvm",
+		//"-enable-kvm",
 		"-object", "rng-random,filename=/dev/urandom,id=rng0",
 		"-device", "virtio-rng-pci,rng=rng0",
 	}

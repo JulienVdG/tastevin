@@ -42,7 +42,7 @@ func (ew *ExpectWriter) Write(p []byte) (n int, err error) {
 	ew.CallCount++
 	cmp := bytes.Compare(ew.Content, p)
 	if cmp != 0 {
-		ew.Result = fmt.Errorf("mismatched %s write, wanted '%v', got '%v'", ew.Name, string(ew.Content), string(p))
+		ew.Result = fmt.Errorf("mismatched %s write: got '%v', want '%v'", ew.Name, string(p), string(ew.Content))
 	}
 	return len(p), nil
 }
@@ -56,7 +56,7 @@ func (ec *ExpectCloser) Close() error {
 // NotCalled return nil if not called
 func (cc *CallCounter) NotCalled() (err error) {
 	if cc.CallCount != 0 {
-		err = fmt.Errorf("%s called while not expected, got %v", cc.Name, cc.CallCount)
+		err = fmt.Errorf("%s called while not expected: CallCount=%v, want 0", cc.Name, cc.CallCount)
 	}
 	cc.CallCount = 0
 	return
@@ -65,9 +65,9 @@ func (cc *CallCounter) NotCalled() (err error) {
 // CalledOnce return nil if called exactly once
 func (cc *CallCounter) CalledOnce() (err error) {
 	if cc.CallCount == 0 {
-		err = fmt.Errorf("%s not called, expected once", cc.Name)
+		err = fmt.Errorf("%s not called, expected once: CallCount=0, want 1", cc.Name)
 	} else if cc.CallCount != 1 {
-		err = fmt.Errorf("%s called more than once, got %v", cc.Name, cc.CallCount)
+		err = fmt.Errorf("%s called more than once: CallCount=%v, want 1", cc.Name, cc.CallCount)
 	}
 	cc.CallCount = 0
 	return

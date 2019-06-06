@@ -39,7 +39,7 @@ func TestQemu(t *testing.T) {
 	}
 	t.Logf("Power status is %v", on)
 	if on {
-		t.Errorf("Expected off got %v", err)
+		t.Errorf("Expected off: PowerStatus()=%v, want %v", on, false)
 	}
 
 	err = vm.PowerUp()
@@ -52,7 +52,7 @@ func TestQemu(t *testing.T) {
 	}
 	t.Logf("Power status is %v", on)
 	if !on {
-		t.Errorf("Expected on got %v", err)
+		t.Errorf("Expected on: PowerStatus()=%v, want %v", on, true)
 	}
 
 	time.Sleep(3 * time.Second)
@@ -67,7 +67,7 @@ func TestQemu(t *testing.T) {
 	}
 	t.Logf("Power status is %v", on)
 	if on {
-		t.Errorf("Expected off got %v", err)
+		t.Errorf("Expected off: PowerStatus()=%v, want %v", on, false)
 	}
 
 	err = vm.Close()

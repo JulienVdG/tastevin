@@ -85,7 +85,7 @@ func TestSerialAndIPMI(t *testing.T) {
 			t.Error(err)
 		}
 		if !on {
-			t.Error("Expected Power status On, got Off")
+			t.Errorf("Expected on: PowerStatus()=%v, want %v", on, true)
 		}
 		err = ci.Ipmi.PowerDown()
 		if err != nil {
@@ -97,7 +97,7 @@ func TestSerialAndIPMI(t *testing.T) {
 			t.Error(err)
 		}
 		if on {
-			t.Error("Expected Power status Off, got On")
+			t.Errorf("Expected off: PowerStatus()=%v, want %v", on, false)
 		}
 	}) // end of ipmi power
 }

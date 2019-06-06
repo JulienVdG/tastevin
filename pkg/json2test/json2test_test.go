@@ -36,7 +36,7 @@ type testCase struct {
 func (c *testCase) Handle(e json2test.TestEvent) {
 	c.CallCount++
 	if !reflect.DeepEqual(e, c.e) {
-		c.result = fmt.Errorf("TestEvent differ got %v expected %v", e, c.e)
+		c.result = fmt.Errorf("TestEvent differ got %v, want %v", e, c.e)
 	}
 	c.result = nil
 }
@@ -62,7 +62,7 @@ func TestConverter(t *testing.T) {
 		i, err := w.Write([]byte{})
 		Assert(t, err)
 		if i != 0 {
-			t.Errorf("expected 0 got %v", i)
+			t.Errorf("got %v, want 0", i)
 		}
 		Assert(t, c.NotCalled())
 		Assert(t, logCount.NotCalled())
@@ -71,7 +71,7 @@ func TestConverter(t *testing.T) {
 		i, err := w.Write([]byte("{}}"))
 		Assert(t, err)
 		if i != 3 {
-			t.Errorf("expected 3 got %v", i)
+			t.Errorf("got %v, want 3", i)
 		}
 		Assert(t, logCount.CalledOnce())
 		Assert(t, c.NotCalled())
@@ -82,7 +82,7 @@ func TestConverter(t *testing.T) {
 		i, err := w.Write([]byte("#"))
 		Assert(t, err)
 		if i != 1 {
-			t.Errorf("expected 1 got %v", i)
+			t.Errorf("got %v, want 1", i)
 		}
 		Assert(t, printCount.CalledOnce())
 		Assert(t, logCount.NotCalled())
@@ -106,7 +106,7 @@ func TestConverter(t *testing.T) {
 			i, err := w.Write(msg)
 			Assert(t, err)
 			if i != len(msg) {
-				t.Errorf("expected %d got %d", len(msg), i)
+				t.Errorf("got %d, want %d", i, len(msg))
 			}
 			Assert(t, c.result)
 			Assert(t, c.CalledOnce())
@@ -145,7 +145,7 @@ func TestConverterVerbose(t *testing.T) {
 
 			res := buf.Bytes()
 			if bytes.Compare(orig, res) != 0 {
-				t.Errorf("Content differ got:\n%q\nexpect:\n%q\n", res, orig)
+				t.Errorf("Content differ got:\n%q\nwant:\n%q\n", res, orig)
 			}
 
 		})

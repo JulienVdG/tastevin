@@ -128,7 +128,7 @@ func writer(ws *websocket.Conn, l *live) {
 	//ws.WriteMessage(websocket.TextMessage, []byte("Connected !"))
 	ch := l.register(ws)
 	defer l.unregister(ws)
-	var last int = 0
+	var last int
 	for {
 		select {
 		case end := <-ch:

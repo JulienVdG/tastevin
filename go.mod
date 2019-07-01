@@ -1,6 +1,7 @@
 module github.com/JulienVdG/tastevin
 
 require (
+	github.com/GeertJohan/go.rice v1.0.0
 	github.com/digitalocean/go-libvirt v0.0.0-20190419173705-5ea6f2a136d8 // indirect
 	github.com/digitalocean/go-qemu v0.0.0-20181112162955-dd7bb9c771b8
 	github.com/google/goexpect v0.0.0-20190516060327-b674c1c17d90

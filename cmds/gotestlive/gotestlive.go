@@ -26,20 +26,29 @@ import (
 	"github.com/JulienVdG/tastevin/pkg/gotestweb"
 )
 
-func serve() {
+var (
+	flagP = flag.Bool("p", false, "proxy for dev")
+	flagL = flag.Bool("l", false, "local files for prereleases")
+)
+
+func setHTTPHandlers() {
 	// TODO param for proxy
-	if false {
+	if *flagP {
 		rpURL, err := url.Parse("http://localhost:3000/")
 		if err != nil {
 			log.Fatal(err)
 		}
 		http.Handle("/", httputil.NewSingleHostReverseProxy(rpURL))
-	} else {
+	} else if *flagL {
 		http.Handle("/", http.FileServer(http.Dir("../gotest-web/gotest-web2/dist/")))
+	} else {
+		err := gotestweb.Handle()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	http.Handle("/single/", http.StripPrefix("/single/", http.FileServer(http.Dir("logs/"))))
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func run(l io.WriteCloser, args []string) error {
@@ -72,10 +81,11 @@ func (w *countWriter) Write(b []byte) (int, error) {
 
 func main() {
 	flag.Parse()
+	setHTTPHandlers()
 	l := gotestweb.HandleLive()
 	errc := make(chan error, 1)
 	go func() {
-		serve()
+		log.Fatal(http.ListenAndServe(":8080", nil))
 		errc <- nil
 	}()
 	browser.Open("http://localhost:8080/#build?live&asciicast=single&summary")
@@ -83,7 +93,7 @@ func main() {
 	err := run(l, args)
 	fmt.Printf("gotestlive: test done.\n")
 
-	<-errc // Wait for serve end
+	<-errc // Wait for http.ListenAndServe end
 	if err != nil {
 		os.Exit(1)
 	}

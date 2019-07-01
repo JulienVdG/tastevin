@@ -85,6 +85,7 @@ func ExpectOptions(screenLogBaseName string) ([]exp.Option, error) {
 	return o, nil
 }
 
+// DescribeBatcherErr Describe a Batcher error by picking the batch step
 func DescribeBatcherErr(batch []exp.Batcher, res []exp.BatchRes, err error) error {
 	last := res[len(res)-1]
 	i := last.Idx

@@ -20,6 +20,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/JulienVdG/tastevin/pkg/json2test"
 )
@@ -39,6 +40,13 @@ func main() {
 
 	c := json2test.NewConverter(json2test.NewVerboseHandler(os.Stdout))
 	if *flagJ != "" {
+		dir := filepath.Dir(*flagJ)
+		err := os.MkdirAll(dir, 0775)
+		if err != nil {
+			fmt.Printf("Error creating directory '%s': %v", dir, err)
+			os.Exit(1)
+		}
+
 		f, err := os.Create(*flagJ)
 		if err != nil {
 			fmt.Printf("Error creating file '%s': %v", *flagJ, err)

@@ -32,28 +32,47 @@ func usage() {
 
 var (
 	flagJ = flag.String("j", "", "save JSON to `file`")
+	flagV = flag.Bool("v", false, "verbose test output (like go test -v)")
+	flagS = flag.Bool("s", false, "silent (ie no test output)")
 )
 
 func main() {
 	flag.Usage = usage
 	flag.Parse()
+	var c io.Writer
 
-	c := json2test.NewConverter(json2test.NewVerboseHandler(os.Stdout))
+	if !*flagS {
+		var h json2test.TestEventHandler
+		if *flagV {
+			h = json2test.NewVerboseHandler(os.Stdout)
+		} else {
+			h = json2test.NewSummaryHandler(os.Stdout)
+		}
+
+		c = json2test.NewConverter(h)
+	}
 	if *flagJ != "" {
 		dir := filepath.Dir(*flagJ)
 		err := os.MkdirAll(dir, 0775)
 		if err != nil {
-			fmt.Printf("Error creating directory '%s': %v", dir, err)
+			fmt.Printf("Error creating directory '%s': %v\n", dir, err)
 			os.Exit(1)
 		}
 
 		f, err := os.Create(*flagJ)
 		if err != nil {
-			fmt.Printf("Error creating file '%s': %v", *flagJ, err)
+			fmt.Printf("Error creating file '%s': %v\n", *flagJ, err)
 			os.Exit(1)
 		}
 		defer f.Close()
-		c = io.MultiWriter(c, f)
+		if *flagS {
+			c = f
+		} else {
+			c = io.MultiWriter(c, f)
+		}
+	} else if *flagS {
+		fmt.Printf("Error -j is required in silent mode\n")
+		os.Exit(1)
 	}
 
 	if flag.NArg() == 0 {

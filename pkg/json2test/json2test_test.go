@@ -112,7 +112,6 @@ func TestConverter(t *testing.T) {
 			Assert(t, c.CalledOnce())
 			Assert(t, logCount.NotCalled())
 		})
-
 	}
 }
 
@@ -147,8 +146,38 @@ func TestConverterVerbose(t *testing.T) {
 			if bytes.Compare(orig, res) != 0 {
 				t.Errorf("Content differ got:\n%q\nwant:\n%q\n", res, orig)
 			}
-
 		})
 	}
+}
 
+func TestConverterSummary(t *testing.T) {
+	json2test.LogWarn = logCounter
+
+	files, err := filepath.Glob("testdata/*.test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, file := range files {
+		name := strings.TrimSuffix(filepath.Base(file), ".test")
+		t.Run(name, func(t *testing.T) {
+			orig, err := ioutil.ReadFile(file)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			var buf bytes.Buffer
+			in := orig
+
+			c := json2test.NewConverter(json2test.NewSummaryHandler(&buf))
+			cmd := exec.Command("go", "tool", "test2json")
+			cmd.Stdin = bytes.NewBuffer(in)
+			cmd.Stdout = c
+			cmd.Stderr = c
+			err = cmd.Run()
+			Assert(t, err)
+			Assert(t, logCount.NotCalled())
+
+			/* TODO remove test failed output from orig and compare. */
+		})
+	}
 }

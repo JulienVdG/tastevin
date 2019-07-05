@@ -24,11 +24,15 @@ import (
 
 	"github.com/JulienVdG/tastevin/pkg/browser"
 	"github.com/JulienVdG/tastevin/pkg/gotestweb"
+	"github.com/JulienVdG/tastevin/pkg/json2test"
+	"github.com/JulienVdG/tastevin/pkg/xio"
 )
 
 var (
 	flagP = flag.Bool("p", false, "proxy for dev")
 	flagL = flag.Bool("l", false, "local files for prereleases")
+	flagV = flag.Bool("v", false, "verbose test output (like go test -v)")
+	flagS = flag.Bool("s", false, "silent (ie no test output)")
 )
 
 func setHTTPHandlers() {
@@ -81,6 +85,7 @@ func (w *countWriter) Write(b []byte) (int, error) {
 
 func main() {
 	flag.Parse()
+	var c io.WriteCloser
 	setHTTPHandlers()
 	l := gotestweb.HandleLive()
 	errc := make(chan error, 1)
@@ -89,8 +94,21 @@ func main() {
 		errc <- nil
 	}()
 	browser.Open("http://localhost:8080/#build?live&asciicast=single&summary")
+	if !*flagS {
+		var h json2test.TestEventHandler
+		if *flagV {
+			h = json2test.NewVerboseHandler(os.Stdout)
+		} else {
+			h = json2test.NewSummaryHandler(os.Stdout)
+		}
+
+		c = json2test.NewConverter(h)
+		c = xio.MultiWriteCloser(l, c)
+	} else {
+		c = l
+	}
 	args := flag.Args()
-	err := run(l, args)
+	err := run(c, args)
 	fmt.Printf("gotestlive: test done.\n")
 
 	<-errc // Wait for http.ListenAndServe end

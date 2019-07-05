@@ -45,7 +45,7 @@ type converter struct {
 
 // NewConverter returns a "json to test" converter.
 // Writes on the returned writer are decoded and given to the TestEventHandlers.
-func NewConverter(h ...TestEventHandler) io.Writer {
+func NewConverter(h ...TestEventHandler) io.WriteCloser {
 	c := new(converter)
 	*c = converter{
 		h: h,
@@ -78,4 +78,9 @@ func (c *converter) Write(b []byte) (int, error) {
 		}
 	}
 	return len(b), nil
+}
+
+// Close does nothing but allow to use the converter as a io.WriteCloser
+func (c *converter) Close() error {
+	return nil
 }

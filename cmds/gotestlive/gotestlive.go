@@ -20,9 +20,9 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"os/exec"
 
 	"github.com/JulienVdG/tastevin/pkg/browser"
+	"github.com/JulienVdG/tastevin/pkg/gotest"
 	"github.com/JulienVdG/tastevin/pkg/gotestweb"
 	"github.com/JulienVdG/tastevin/pkg/json2test"
 	"github.com/JulienVdG/tastevin/pkg/xio"
@@ -55,34 +55,6 @@ func setHTTPHandlers() {
 
 }
 
-func run(l io.WriteCloser, args []string) error {
-	defer l.Close()
-	cmd := exec.Command(args[0], args[1:]...)
-	w := &countWriter{0, l}
-	cmd.Stdout = w
-	cmd.Stderr = w
-	if err := cmd.Run(); err != nil {
-		if w.n > 0 {
-			// Assume command printed why it failed.
-		} else {
-			fmt.Fprintf(l, "Error unable to run tests: %v\n", err)
-			fmt.Printf("gotestlive: %v\n", err)
-		}
-		return err
-	}
-	return nil
-}
-
-type countWriter struct {
-	n int64
-	w io.Writer
-}
-
-func (w *countWriter) Write(b []byte) (int, error) {
-	w.n += int64(len(b))
-	return w.w.Write(b)
-}
-
 func main() {
 	flag.Parse()
 	var c io.WriteCloser
@@ -108,7 +80,7 @@ func main() {
 		c = l
 	}
 	args := flag.Args()
-	err := run(c, args)
+	err := gotest.Run(c, args)
 	fmt.Printf("gotestlive: test done.\n")
 
 	<-errc // Wait for http.ListenAndServe end

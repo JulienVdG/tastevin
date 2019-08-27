@@ -11,9 +11,14 @@ import (
 	rice "github.com/GeertJohan/go.rice"
 )
 
+// RiceBox returns the rice.Box containing GoTestWeb
+func RiceBox() (*rice.Box, error) {
+	return rice.FindBox("http-files")
+}
+
 // Handle adds a http.Handle for / serving the gotest-web js application
 func Handle() error {
-	box, err := rice.FindBox("http-files")
+	box, err := RiceBox()
 	if err != nil {
 		return err
 	}

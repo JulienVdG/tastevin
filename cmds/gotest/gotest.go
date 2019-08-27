@@ -7,7 +7,7 @@
 //
 // Usage:
 //
-//	gotest [go test -json]
+//	gotest <run|live|serve|gen> [go test -json]
 //
 package main
 
@@ -22,7 +22,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
+	rice "github.com/GeertJohan/go.rice"
 	"github.com/JulienVdG/tastevin/pkg/browser"
 	"github.com/JulienVdG/tastevin/pkg/gotest"
 	"github.com/JulienVdG/tastevin/pkg/gotestweb"
@@ -35,22 +37,27 @@ func usage() {
 	fmt.Fprintf(flag.CommandLine.Output(), "Usage: gotest [flags] <run|live|serve|gen> [go test -json]\n")
 	fmt.Fprintf(flag.CommandLine.Output(), "  run\trun the test and save outputs\n")
 	fmt.Fprintf(flag.CommandLine.Output(), "  live\trun the test, save outputs and serve them in browser\n")
-	fmt.Fprintf(flag.CommandLine.Output(), "  serve\tserve the given test output in browser\n\n")
+	fmt.Fprintf(flag.CommandLine.Output(), "  serve\tserve the given test output in browser\n")
+	fmt.Fprintf(flag.CommandLine.Output(), "  gen\trender the given test for external web server\n\n")
 	flag.PrintDefaults()
 	os.Exit(2)
 }
 
 var (
-	flagL = flag.String("l", "logs/", "set the log directory, also passed to tastevin config")
-	flagJ = flag.String("j", "results.json", "set JSON `filename` inside log directory")
-	flagV = flag.Bool("v", false, "verbose test output (like go test -v)")
-	flagS = flag.Bool("s", false, "silent (ie no test output)")
-	flagP = flag.String("p", "", "dev: proxy to gotestweb (typical http://localhost:3000/ )")
-	flagT = flag.String("t", "", "dev: test path to gotestweb (typical pkg/gotestweb/webapp/dist/ )")
+	flagL   = flag.String("l", "logs/", "set the log directory, also passed to tastevin config")
+	flagJ   = flag.String("j", "results.json", "set JSON `filename` inside log directory")
+	flagV   = flag.Bool("v", false, "verbose test output (like go test -v)")
+	flagS   = flag.Bool("s", false, "silent (ie no test output)")
+	flagP   = flag.String("p", "", "dev: proxy to gotestweb (typical \"http://localhost:3000/\")")
+	flagT   = flag.String("t", "", "dev: test path to gotestweb (typical \"pkg/gotestweb/webapp/dist/\")")
+	flagH   = flag.String("o", "", "set the html output directory (default \"output/\" for gen)")
+	flagI   = flag.String("i", "index.html", "set the html output filename")
+	appURL  = flag.String("app", "", "gen: External URL to find GoTestWeb")
+	flagCDN = flag.Bool("cdn", false, "gen: use CDN url for bootstrap and jquery")
 )
 
 func main() {
-	var doRun, live, doServe bool
+	var doRun, live, doServe, doGen bool
 	flag.Usage = usage
 	flag.Parse()
 	if flag.NArg() == 0 {
@@ -60,12 +67,17 @@ func main() {
 	switch args[0] {
 	case "run":
 		doRun = true
+		if *flagH != "" {
+			doGen = true
+		}
 	case "live":
 		doRun = true
 		live = true
 		doServe = true
 	case "serve":
 		doServe = true
+	case "gen":
+		doGen = true
 	default:
 		usage()
 	}
@@ -73,12 +85,17 @@ func main() {
 	var l io.WriteCloser
 	serveDone := make(chan struct{}, 1)
 	if doServe {
-		l = serve(live, serveDone)
+		var err error
+		l, err = serve(live, serveDone)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 
-	var err error
+	var runerr error
 	if doRun {
-		err = run(l, args[1:])
+		runerr = run(l, args[1:])
 	}
 	if live {
 		fmt.Printf("gotest live: test done.\n")
@@ -89,9 +106,17 @@ func main() {
 		<-serveDone
 	}
 
-	if err != nil {
-		if _, ok := err.(gotest.RunError); !ok {
+	if doGen {
+		err := gen()
+		if err != nil {
 			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
+
+	if runerr != nil {
+		if _, ok := runerr.(gotest.RunError); !ok {
+			fmt.Println(runerr)
 		}
 		os.Exit(1)
 	}
@@ -119,12 +144,11 @@ func setHTTPHandlers() (string, error) {
 	return slug, nil
 }
 
-func serve(live bool, done chan struct{}) io.WriteCloser {
+func serve(live bool, done chan struct{}) (io.WriteCloser, error) {
 	var l io.WriteCloser
 	slug, err := setHTTPHandlers()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return nil, err
 	}
 	if live {
 		l = gotestweb.HandleLive()
@@ -140,7 +164,7 @@ func serve(live bool, done chan struct{}) io.WriteCloser {
 		url += slug + "/" + *flagJ + "?asciicast=" + slug + "&summary=0"
 	}
 	browser.Open(url)
-	return l
+	return l, nil
 }
 
 func run(l io.WriteCloser, args []string) error {
@@ -204,4 +228,145 @@ func run(l io.WriteCloser, args []string) error {
 		return nil
 	}
 	return gotest.Run(c, args)
+}
+
+func gen() error {
+	if *flagH == "" {
+		*flagH = "output/"
+	}
+	outdir, err := filepath.Abs(*flagH)
+	if err != nil {
+		return fmt.Errorf("error getting absolute path '%s': %v", *flagH, err)
+	}
+	err = os.MkdirAll(outdir, 0775)
+	if err != nil {
+		return fmt.Errorf("error creating directory '%s': %v", outdir, err)
+	}
+	logdir, err := filepath.Abs(*flagL)
+	if err != nil {
+		return fmt.Errorf("error getting absolute path '%s': %v", *flagL, err)
+	}
+
+	var slug, jsonfile string
+	if !strings.HasPrefix(logdir+"/", outdir+"/") {
+		slug = filepath.Base(*flagL)
+		jsonfile = slug + "/" + *flagJ
+		// copy logs if logdir is not inside output dir
+		outlogdir := filepath.Join(outdir, slug)
+		e := filepath.Walk(logdir, func(path string, f os.FileInfo, err error) error {
+			if err != nil { // Don't try to fix walk issues
+				return err
+			}
+			relpath, err := filepath.Rel(logdir, path)
+			if err != nil {
+				return err
+			}
+			target := filepath.Join(outlogdir, relpath)
+			return copyItemTo(path, target, f, nil)
+		})
+		if e != nil {
+			return e
+		}
+	} else {
+		// logdir is inside output dir, rebuild path
+		slug, err = filepath.Rel(outdir+"/", logdir+"/")
+		if err != nil {
+			return err
+		}
+
+		if slug == "." && *flagJ == filepath.Base(*flagJ) {
+			slug = ""
+			jsonfile = *flagJ
+		} else {
+			jsonfile = slug + "/" + *flagJ
+		}
+	}
+
+	// use template to generate index
+	indexfilename := filepath.Join(outdir, *flagI)
+	f, err := os.Create(indexfilename)
+	if err != nil {
+		return fmt.Errorf("error creating file '%s': %v", *flagI, err)
+	}
+	defer f.Close()
+	data := gotestweb.IndexData{
+		File:      jsonfile,
+		Asciicast: slug,
+		AppPrefix: *appURL,
+		UseCDN:    *flagCDN,
+	}
+	gotestweb.WriteIndex(f, data)
+
+	if *appURL == "" {
+		box, err := gotestweb.RiceBox()
+		if err != nil {
+			return err
+		}
+		e := box.Walk("", func(path string, f os.FileInfo, err error) error {
+			if err != nil { // Don't try to fix walk issues
+				return err
+			}
+			// skip index, we generated it anyway
+			if path == "index.html" {
+				return nil
+			}
+			// skip box root
+			if f.Name() == "http-files" {
+				return nil
+			}
+			if *flagCDN {
+				// skip cdn components
+				switch path {
+				case "vendor/bootstrap", "vendor/jquery":
+					return filepath.SkipDir
+				}
+			}
+			target := filepath.Join(outdir, path)
+			return copyItemTo(path, target, f, box)
+		})
+		if e != nil {
+			return e
+		}
+	}
+	return nil
+}
+
+func copyItemTo(src, dst string, srcfi os.FileInfo, box *rice.Box) error {
+	m := srcfi.Mode()
+	//fmt.Println(src, dst, m.IsDir(), m.Perm())
+	if m.IsDir() {
+		return os.MkdirAll(dst, 0775)
+	}
+	if !m.IsRegular() {
+		return fmt.Errorf("unsupported file mode %s", m)
+	}
+	return copyRegularFile(src, dst, srcfi, box)
+}
+
+func copyRegularFile(src, dst string, srcfi os.FileInfo, box *rice.Box) error {
+	var srcf io.Reader
+	if box == nil {
+		f, err := os.Open(src)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		srcf = f
+	} else {
+		f, err := box.Open(src)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		srcf = f
+	}
+
+	dstf, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, srcfi.Mode().Perm())
+	if err != nil {
+		return err
+	}
+	defer dstf.Close()
+
+	_, err = io.Copy(dstf, srcf)
+	return err
 }

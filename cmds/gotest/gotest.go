@@ -20,6 +20,7 @@ import (
 
 	"github.com/JulienVdG/tastevin/pkg/gotest"
 	"github.com/JulienVdG/tastevin/pkg/json2test"
+	"github.com/JulienVdG/tastevin/pkg/testsuite"
 	"github.com/JulienVdG/tastevin/pkg/xio"
 )
 
@@ -66,6 +67,17 @@ func main() {
 			c = f
 		} else {
 			c = xio.MultiWriteCloser(c, f)
+		}
+		// Update env
+		absdir, err := filepath.Abs(dir)
+		if err != nil {
+			fmt.Printf("Error getting absolute path '%s': %v\n", dir, err)
+			os.Exit(1)
+		}
+		err = testsuite.SetConfLogDir(absdir)
+		if err != nil {
+			fmt.Printf("Error updating config: %v\n", err)
+			os.Exit(1)
 		}
 	} else if *flagS {
 		fmt.Printf("Error -j is required in silent mode\n")

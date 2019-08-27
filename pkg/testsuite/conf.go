@@ -42,3 +42,30 @@ func getConf() (*conf, error) {
 
 	return &_conf, nil
 }
+
+func setConf(c *conf) error {
+	b, err := json.Marshal(c)
+	if err != nil {
+		return fmt.Errorf("error generating TASTEVIN_CONF: %v", err)
+	}
+	err = os.Setenv("TASTEVIN_CONF", string(b))
+	if err != nil {
+		return fmt.Errorf("error setting TASTEVIN_CONF in environment: %v", err)
+	}
+	_conf = *c
+	return nil
+}
+
+// SetConfLogDir update the configuration in environment by setting the log recorder directory (if previously unset)
+func SetConfLogDir(basedir string) error {
+	c, _ := getConf()
+	if c.ScriptReplayPrefix == "" {
+		c.ScriptReplayPrefix = basedir
+	}
+	if c.AsciicastPrefix == "" {
+		c.AsciicastPrefix = basedir
+	}
+	c.LongName = true
+
+	return setConf(c)
+}

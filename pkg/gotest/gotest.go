@@ -28,7 +28,7 @@ func Run(output io.WriteCloser, args []string) error {
 			fmt.Fprintf(output, "Error unable to run tests: %v\n", err)
 			fmt.Printf("gotest: %v\n", err)
 		}
-		return err
+		return RunError{err}
 	}
 	return nil
 }
@@ -41,4 +41,13 @@ type countWriter struct {
 func (w *countWriter) Write(b []byte) (int, error) {
 	w.n += int64(len(b))
 	return w.w.Write(b)
+}
+
+// RunError wraps error returned by Run to avoid printing it twice
+type RunError struct {
+	err error
+}
+
+func (r RunError) Error() string {
+	return r.err.Error()
 }

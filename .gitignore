@@ -24,3 +24,6 @@
 
 # test log stored in testdata are not test binaries
 !**/testdata/*.test
+# default gotest directories
+logs/
+output/

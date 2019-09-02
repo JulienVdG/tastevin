@@ -14,9 +14,10 @@ import (
 )
 
 type sr struct {
-	script  io.WriteCloser
-	timing  io.WriteCloser
-	oldtime time.Time
+	script   io.WriteCloser
+	timing   io.WriteCloser
+	oldtime  time.Time
+	logclose string
 }
 
 // Now function provide time default to time.Now
@@ -46,8 +47,12 @@ func NewFileWriter(scriptName, timingName string) (io.WriteCloser, error) {
 		return nil, fmt.Errorf("Error creating file '%s': %v", timingName, err)
 	}
 
-	return NewWriter(fo, ft), nil
+	wc := NewWriter(fo, ft)
+	sr := wc.(*sr)
+	fmt.Printf("*** ScriptReplay '%s' (%s) start\n", scriptName, timingName)
+	sr.logclose = fmt.Sprintf("*** ScriptReplay '%s' (%s) end", scriptName, timingName)
 
+	return wc, nil
 }
 
 // Write implement io.Writer interface
@@ -66,6 +71,10 @@ func (sr *sr) Close() error {
 	t := Now()
 	msg := fmt.Sprintf("\nScript done on %s [<end>]\n", t.Format(time.RFC3339))
 	sr.script.Write([]byte(msg))
+
+	if sr.logclose != "" {
+		fmt.Println(sr.logclose)
+	}
 
 	var err error
 	errt := sr.timing.Close()

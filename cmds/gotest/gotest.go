@@ -161,7 +161,7 @@ func serve(live bool, done chan struct{}) (io.WriteCloser, error) {
 	if live {
 		url += slug + "/?live&summary=1"
 	} else {
-		url += slug + "/" + *flagJ + "?asciicast=" + slug + "&summary=0"
+		url += slug + "/" + *flagJ + "?asciicast=" + slug + "&scriptreplay=" + slug + "&summary=0"
 	}
 	browser.Open(url)
 	return l, nil
@@ -290,10 +290,11 @@ func gen() error {
 	}
 	defer f.Close()
 	data := gotestweb.IndexData{
-		File:      jsonfile,
-		Asciicast: slug,
-		AppPrefix: *appURL,
-		UseCDN:    *flagCDN,
+		File:         jsonfile,
+		Asciicast:    slug,
+		Scriptreplay: slug,
+		AppPrefix:    *appURL,
+		UseCDN:       *flagCDN,
 	}
 	gotestweb.WriteIndex(f, data)
 

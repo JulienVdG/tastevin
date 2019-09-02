@@ -13,11 +13,12 @@ import (
 
 // IndexData group the options for rendering the Index template
 type IndexData struct {
-	File      string
-	Asciicast string
-	Summary   bool
-	AppPrefix string
-	UseCDN    bool
+	File         string
+	Asciicast    string
+	Scriptreplay string
+	Summary      bool
+	AppPrefix    string
+	UseCDN       bool
 }
 
 // WriteIndex customize the index with given parameters and outputs it
@@ -78,7 +79,7 @@ var indexTemplate = `<!DOCTYPE html>
 {{end}}
     <script src="{{.AppPrefix}}vendor/asciinema/asciinema-player.js"></script>
 
-    <script src="{{.AppPrefix}}js/app.min.js"{{if .File}} data-file="{{.File}}"{{end}}{{if .Summary}} data-summary="true"{{end}}{{if .Asciicast}} data-asciicast="{{.Asciicast}}"{{end}}></script>
+    <script src="{{.AppPrefix}}js/app.min.js"{{if .File}} data-file="{{.File}}"{{end}}{{if .Summary}} data-summary="true"{{end}}{{if .Asciicast}} data-asciicast="{{.Asciicast}}"{{end}}{{if .Scriptreplay}} data-scriptreplay="{{.Scriptreplay}}"{{end}}></script>
 </body>
 
 </html>

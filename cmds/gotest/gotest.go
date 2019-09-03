@@ -22,9 +22,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 
-	rice "github.com/GeertJohan/go.rice"
 	"github.com/JulienVdG/tastevin/pkg/browser"
 	"github.com/JulienVdG/tastevin/pkg/gotestweb"
 	"github.com/JulienVdG/tastevin/pkg/json2test"
@@ -51,8 +49,8 @@ var (
 	flagT   = flag.String("t", "", "dev: test path to gotestweb (typical \"pkg/gotestweb/webapp/dist/\")")
 	flagH   = flag.String("o", "", "set the html output directory (default \"output/\" for gen)")
 	flagI   = flag.String("i", "index.html", "set the html output filename")
-	appURL  = flag.String("app", "", "gen: External URL to find GoTestWeb")
-	flagCDN = flag.Bool("cdn", false, "gen: use CDN url for bootstrap and jquery")
+	appURL  = flag.String("app", "", "gen: Your server external URL to find GoTestWeb")
+	flagCDN = flag.Bool("cdn", false, "gen: use public CDN URL for bootstrap and jquery")
 )
 
 func main() {
@@ -246,127 +244,5 @@ func gen() error {
 		return fmt.Errorf("error getting absolute path '%s': %v", *flagL, err)
 	}
 
-	var slug, jsonfile string
-	if !strings.HasPrefix(logdir+"/", outdir+"/") {
-		slug = filepath.Base(*flagL)
-		jsonfile = slug + "/" + *flagJ
-		// copy logs if logdir is not inside output dir
-		outlogdir := filepath.Join(outdir, slug)
-		e := filepath.Walk(logdir, func(path string, f os.FileInfo, err error) error {
-			if err != nil { // Don't try to fix walk issues
-				return err
-			}
-			relpath, err := filepath.Rel(logdir, path)
-			if err != nil {
-				return err
-			}
-			target := filepath.Join(outlogdir, relpath)
-			return copyItemTo(path, target, f, nil)
-		})
-		if e != nil {
-			return e
-		}
-	} else {
-		// logdir is inside output dir, rebuild path
-		slug, err = filepath.Rel(outdir+"/", logdir+"/")
-		if err != nil {
-			return err
-		}
-
-		if slug == "." && *flagJ == filepath.Base(*flagJ) {
-			slug = ""
-			jsonfile = *flagJ
-		} else {
-			jsonfile = slug + "/" + *flagJ
-		}
-	}
-
-	// use template to generate index
-	indexfilename := filepath.Join(outdir, *flagI)
-	f, err := os.Create(indexfilename)
-	if err != nil {
-		return fmt.Errorf("error creating file '%s': %v", *flagI, err)
-	}
-	defer f.Close()
-	data := gotestweb.IndexData{
-		File:         jsonfile,
-		Asciicast:    slug,
-		Scriptreplay: slug,
-		AppPrefix:    *appURL,
-		UseCDN:       *flagCDN,
-	}
-	gotestweb.WriteIndex(f, data)
-
-	if *appURL == "" {
-		box, err := gotestweb.RiceBox()
-		if err != nil {
-			return err
-		}
-		e := box.Walk("", func(path string, f os.FileInfo, err error) error {
-			if err != nil { // Don't try to fix walk issues
-				return err
-			}
-			// skip index, we generated it anyway
-			if path == "index.html" {
-				return nil
-			}
-			// skip box root
-			if f.Name() == "http-files" {
-				return nil
-			}
-			if *flagCDN {
-				// skip cdn components
-				switch path {
-				case "vendor/bootstrap", "vendor/jquery":
-					return filepath.SkipDir
-				}
-			}
-			target := filepath.Join(outdir, path)
-			return copyItemTo(path, target, f, box)
-		})
-		if e != nil {
-			return e
-		}
-	}
-	return nil
-}
-
-func copyItemTo(src, dst string, srcfi os.FileInfo, box *rice.Box) error {
-	m := srcfi.Mode()
-	//fmt.Println(src, dst, m.IsDir(), m.Perm())
-	if m.IsDir() {
-		return os.MkdirAll(dst, 0775)
-	}
-	if !m.IsRegular() {
-		return fmt.Errorf("unsupported file mode %s", m)
-	}
-	return copyRegularFile(src, dst, srcfi, box)
-}
-
-func copyRegularFile(src, dst string, srcfi os.FileInfo, box *rice.Box) error {
-	var srcf io.Reader
-	if box == nil {
-		f, err := os.Open(src)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		srcf = f
-	} else {
-		f, err := box.Open(src)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		srcf = f
-	}
-
-	dstf, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, srcfi.Mode().Perm())
-	if err != nil {
-		return err
-	}
-	defer dstf.Close()
-
-	_, err = io.Copy(dstf, srcf)
-	return err
+	return Gen(outdir, logdir, *flagJ, *flagI, *appURL, *flagCDN)
 }

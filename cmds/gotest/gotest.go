@@ -26,7 +26,6 @@ import (
 
 	rice "github.com/GeertJohan/go.rice"
 	"github.com/JulienVdG/tastevin/pkg/browser"
-	"github.com/JulienVdG/tastevin/pkg/gotest"
 	"github.com/JulienVdG/tastevin/pkg/gotestweb"
 	"github.com/JulienVdG/tastevin/pkg/json2test"
 	"github.com/JulienVdG/tastevin/pkg/testsuite"
@@ -115,7 +114,7 @@ func main() {
 	}
 
 	if runerr != nil {
-		if _, ok := runerr.(gotest.RunError); !ok {
+		if _, ok := runerr.(RunError); !ok {
 			fmt.Println(runerr)
 		}
 		os.Exit(1)
@@ -227,7 +226,7 @@ func run(l io.WriteCloser, args []string) error {
 		c.Close()
 		return nil
 	}
-	return gotest.Run(c, args)
+	return Run(c, args)
 }
 
 func gen() error {

@@ -6,7 +6,7 @@
 // Based on test2json/main.go
 // Copyright 2017 The Go Authors. All rights reserved.
 
-package gotest
+package main
 
 import (
 	"fmt"

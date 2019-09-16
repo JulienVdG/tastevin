@@ -63,8 +63,11 @@ func (c *converter) Write(b []byte) (int, error) {
 		var e TestEvent
 		err := json.Unmarshal(line, &e)
 		if err != nil {
+			nonspaceOffset := int64(bytes.IndexFunc(line, func(c rune) bool {
+				return c > ' '
+			})) + 1
 			jsonErr, ok := err.(*json.SyntaxError)
-			if ok && jsonErr.Offset == 1 {
+			if ok && jsonErr.Offset == nonspaceOffset {
 				// Non decoded full line, probably an error
 				// display it
 				OutPrintf("%s\n", line)

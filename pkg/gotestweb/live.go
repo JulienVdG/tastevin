@@ -44,6 +44,7 @@ type live struct {
 	content   bytes.Buffer
 	contentMu sync.RWMutex
 	clients   map[*websocket.Conn]chan int
+	clientsMu sync.RWMutex
 	done      bool
 }
 
@@ -62,6 +63,8 @@ func (l *live) Write(b []byte) (int, error) {
 	if err != nil {
 		return n, err
 	}
+	l.clientsMu.RLock()
+	defer l.clientsMu.RUnlock()
 	for _, ch := range l.clients {
 		ch <- l.content.Len()
 	}
@@ -71,6 +74,8 @@ func (l *live) Write(b []byte) (int, error) {
 // Close mark the end of the test run
 func (l *live) Close() error {
 	l.done = true
+	l.clientsMu.RLock()
+	defer l.clientsMu.RUnlock()
 	for _, ch := range l.clients {
 		ch <- l.content.Len()
 	}
@@ -83,12 +88,18 @@ func (l *live) register(ws *websocket.Conn) chan int {
 	go func() {
 		ch <- l.content.Len()
 	}()
+	l.clientsMu.Lock()
 	l.clients[ws] = ch
+	l.clientsMu.Unlock()
 	return ch
 }
 
 func (l *live) unregister(ws *websocket.Conn) {
 	logDebug("unregister %v\n", ws.RemoteAddr())
+	l.clientsMu.Lock()
+	defer l.clientsMu.Unlock()
+	ch := l.clients[ws]
+	close(ch)
 	delete(l.clients, ws)
 }
 

@@ -70,7 +70,7 @@ func TestBoot2(t *testing.T) {
 		&exp.BExpT{R: "Linux version", T: 1},
 		&exp.BExpT{R: "root@debian-linuxboot-dut:~#", T: 20},
 		&exp.BSnd{S: "poweroff\r\n"},
-		&exp.BExpT{R: "reboot: Power down", T: 5},
+		&exp.BExpT{R: "reboot: Power down", T: 10},
 	}
 
 	res, err = e.ExpectBatch(bootBatcher, 0)

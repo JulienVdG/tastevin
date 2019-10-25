@@ -25,7 +25,8 @@ func (vm *VM) Spawn(timeout time.Duration, opts ...exp.Option) (*exp.GExpect, <-
 	}
 	qmpsocket := filepath.Join(vm.tmpdir, qmpsock)
 	args := append(vm.Args, "-nographic", "-S", "-no-shutdown")
-	args = append(args, "-qmp", fmt.Sprintf("unix:%s,server", qmpsocket))
+	qmparg := fmt.Sprintf("unix:%s,server", qmpsocket)
+	args = append(args, "-qmp", qmparg)
 	vm.Args = args
 
 	e, errchan, err := exp.SpawnWithArgs(vm.Args, timeout, opts...)
@@ -37,7 +38,7 @@ func (vm *VM) Spawn(timeout time.Duration, opts ...exp.Option) (*exp.GExpect, <-
 	vm.expectCh = errchan
 
 	// qemu-system-x86_64: -qmp unix:/tmp/tastevin-qemu238249216/qmp-sock,server: info: QEMU waiting for connection on: disconnected:unix:/tmp/tastevin-qemu238249216/qmp-sock,server
-	out, _, err := e.Expect(regexp.MustCompile("-qmp .* info: QEMU waiting for connection on: disconnected:"), 1*time.Second)
+	out, _, err := e.Expect(regexp.MustCompile("QEMU waiting for connection on: disconnected:"+regexp.QuoteMeta(qmparg)), 1*time.Second)
 	if err != nil {
 		vm.cleanup()
 		return nil, nil, fmt.Errorf("error waiting for qemu qmp sever: %v (got %v)", err, out)

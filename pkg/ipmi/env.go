@@ -14,7 +14,7 @@ import (
 
 // ConfigFromEnv returns the ipmi configuration from TASTEVIN_IPMI env var
 // example env:
-// TASTEVIN_IPMI='{"Hostname":"10.0.3.208","Username":"USERID","Password":"PASSW0RD","Interface":"lanplus","Path":"ipmitool"}'
+// TASTEVIN_IPMI='{"Hostname":"10.0.3.208","Username":"USERID","Password":"PASSW0RD","Interface":"lanplus","Path":"ipmitool","YafuFlashPath":"YafuFlash"}'
 func ConfigFromEnv() (*Connection, error) {
 	env := os.Getenv("TASTEVIN_IPMI")
 	if env == "" {

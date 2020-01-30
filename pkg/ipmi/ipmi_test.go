@@ -18,7 +18,7 @@ func TestRemote(t *testing.T) {
 	err := s.Run()
 	assert.NoError(t, err)
 
-	c := Connection(*s.NewConnection())
+	c := Connection{Connection: *s.NewConnection()}
 	remote, err := NewRemote(&c)
 	assert.NoError(t, err)
 

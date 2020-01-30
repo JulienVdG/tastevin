@@ -13,18 +13,22 @@ import (
 )
 
 // Connection properties for a Client
-type Connection goipmi.Connection
+type Connection struct {
+	goipmi.Connection
+	YafuFlashPath string `json:",omitempty"`
+}
 
 // Remote represent an IPMI Remote
 type Remote struct {
 	*goipmi.Client
+	YafuFlashPath string
 }
 
 // NewRemote creates a new IPMI Remote
 func NewRemote(c *Connection) (*Remote, error) {
-	cc := goipmi.Connection(*c)
+	cc := c.Connection
 	client, err := goipmi.NewClient(&cc)
-	return &Remote{client}, err
+	return &Remote{Client: client, YafuFlashPath: c.YafuFlashPath}, err
 }
 
 // Open a new IPMI session

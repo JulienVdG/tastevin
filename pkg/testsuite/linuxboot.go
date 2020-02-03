@@ -9,16 +9,16 @@ import (
 	exp "github.com/google/goexpect"
 )
 
-// LinuxbootEfiLoaderBatcher follows the boot sequence of linuxboot efi loder
+// LinuxbootEfiLoaderBatcher follows the boot sequence of linuxboot efi loader
 var LinuxbootEfiLoaderBatcher []exp.Batcher = []exp.Batcher{
 	&BExpTLog{
 		L: "Matched LinuxBoot banner",
 		R: "\\| Starting LinuxBoot \\|",
-		T: 20,
+		T: 60,
 	}, &BExpTLog{
 		L: "Matched Starting bzImage",
 		R: "LinuxBoot: Starting bzImage",
-		T: 10,
+		T: 30,
 	}}
 
 // Linuxboot2urootBatcher follows the boot sequence of u-root to the shell prompt
@@ -26,9 +26,9 @@ var Linuxboot2urootBatcher []exp.Batcher = []exp.Batcher{
 	&BExpTLog{
 		L: "Matched u-root banner",
 		R: "Welcome to u-root!",
-		T: 40, // TODO make this time a parameter
+		T: 90, // TODO make this time a parameter
 	}, &BExpTLog{
 		L: "Matched u-root prompt",
 		R: "~/> ",
-		T: 5,
+		T: 20,
 	}}

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/JulienVdG/tastevin/pkg/ipmi"
@@ -21,6 +22,8 @@ type BMCControlledCi struct {
 }
 
 type SkipError error
+
+var loadOnce sync.Once
 
 func NewBMCControlledCi(withSerial bool) (*BMCControlledCi, error) {
 	ci := &BMCControlledCi{}
@@ -53,7 +56,10 @@ func (ci *BMCControlledCi) Open() error {
 		return err
 	}
 
-	err = ci.Ipmi.Load(GetLinuxBootImage())
+	// Flashing image through BMC is long do it only once
+	loadOnce.Do(func() {
+		err = ci.Ipmi.Load(GetLinuxBootImage())
+	})
 	if err != nil {
 		return err
 	}

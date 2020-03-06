@@ -18,7 +18,7 @@ var LinuxbootEfiLoaderBatcher []exp.Batcher = []exp.Batcher{
 	}, &BExpTLog{
 		L: "Matched Starting bzImage",
 		R: "LinuxBoot: Starting bzImage",
-		T: 30,
+		T: 120,
 	}}
 
 // Linuxboot2urootBatcher follows the boot sequence of u-root to the shell prompt
@@ -26,9 +26,9 @@ var Linuxboot2urootBatcher []exp.Batcher = []exp.Batcher{
 	&BExpTLog{
 		L: "Matched u-root banner",
 		R: "Welcome to u-root!",
-		T: 90, // TODO make this time a parameter
+		T: 390, // TODO make this time a parameter
 	}, &BExpTLog{
 		L: "Matched u-root prompt",
 		R: "~/> ",
-		T: 20,
+		T: 320,
 	}}

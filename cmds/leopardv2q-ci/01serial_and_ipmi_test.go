@@ -41,7 +41,7 @@ func TestSerialAndIPMI(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Serial Spawn failed: %v", err)
 			}
-			out, _, err := e.Expect(regexp.MustCompile("LinuxBoot: Starting bzImage"), 90*time.Second)
+			out, _, err := e.Expect(regexp.MustCompile("LinuxBoot: Starting bzImage"), 120*time.Second)
 			if err != nil {
 				t.Errorf("error waiting for linuxboot loader: %v (got %v)", err, out)
 			}

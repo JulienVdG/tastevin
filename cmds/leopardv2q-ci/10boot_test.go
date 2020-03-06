@@ -50,7 +50,7 @@ func genSendExpectEchoLn(msg string) []exp.Batcher {
 }
 
 func disabledTestGenSendExpectEchoLn(t *testing.T) {
-	bootBatcher := genSendExpectEchoLn("boot -remove '$vt_handoff,console,quiet,splash' -reuse earlyprintk,console")
+	bootBatcher := genSendExpectEchoLn("boot -remove '$vt_handoff,console,quiet,splash' -reuse earlyprintk,console -append acpi=off")
 	fmt.Printf("%#q", bootBatcher)
 }
 
@@ -97,7 +97,7 @@ func TestBoot(t *testing.T) {
 		&testsuite.BExpTLog{
 			L: "Ubuntu booted",
 			R: "Ubuntu login:",
-			T: 120,
+			T: 2000,
 		},
 		&exp.BSnd{S: "ubuntu\r\n"},
 		&exp.BExpT{R: "Password:", T: 1},
